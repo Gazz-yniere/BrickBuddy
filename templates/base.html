@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#11131b">
+  <title>{% block title %}Brick Buddy{% endblock %} · LEGO</title>
+  <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg', v=2) }}">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css', v=8) }}">
+  <script src="{{ url_for('static', filename='app.js') }}" defer></script>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <a class="brand" href="{{ url_for('pieces_page') }}"><span class="brand-mark">B</span><span>brick<span class="brand-light">buddy</span></span></a>
+      <div class="sidebar-label">ATELIER</div>
+      <nav class="main-nav" aria-label="Navigation principale">
+        <a class="nav-link {{ 'active' if request.endpoint == 'pieces_page' else '' }}" href="{{ url_for('pieces_page') }}">
+          <span class="nav-icon">▦</span><span>Pièces à réunir</span>
+        </a>
+        <a class="nav-link {{ 'active' if request.endpoint == 'sets_page' else '' }}" href="{{ url_for('sets_page') }}">
+          <span class="nav-icon">▤</span><span>Mes sets</span><span class="nav-count">{{ nav_stats.set_count }}</span>
+        </a>
+        <a class="nav-link {{ 'active' if request.endpoint == 'inventory_page' else '' }}" href="{{ url_for('inventory_page') }}">
+          <span class="nav-icon">▥</span><span>Inventaire</span>
+        </a>
+        <a class="nav-link {{ 'active' if request.endpoint == 'missing_page' else '' }}" href="{{ url_for('missing_page') }}">
+          <span class="nav-icon">⌕</span><span>Pièces manquantes</span><span class="nav-count nav-count-alert">{{ nav_stats.missing_count }}</span>
+        </a>
+      </nav>
+      <div class="sidebar-bottom">
+        <div class="sidebar-note"><span class="note-icon">✦</span><strong>Un peu de patience,</strong><span>et la collection prendra forme.</span><div class="note-bricks"><i></i><i></i><i></i></div></div>
+        <div class="profile"><span class="profile-icon">🧱</span><span><strong>Mon atelier</strong><small>Collection personnelle</small></span><span class="profile-dot"></span></div>
+      </div>
+    </aside>
+
+    <main class="main-area">
+      <header class="topbar">
+        <span class="breadcrumb">MON ATELIER <span>/</span> {% block breadcrumb %}PIÈCES À RÉUNIR{% endblock %}</span>
+        <div class="topbar-actions">
+          <a class="export-link" href="{{ url_for('export_bricklink', scope='owned' if request.endpoint in ['sets_page', 'inventory_page', 'missing_page'] else 'gather') }}">Exporter la liste <span>↗</span></a>
+          <form action="{{ url_for('logout') }}" method="post">
+            <input type="hidden" name="csrf_token" value="{{ session.csrf_token }}">
+            <button class="logout-button" type="submit">Déconnexion</button>
+          </form>
+        </div>
+      </header>
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}<div class="flash-stack" aria-live="polite">{% for category, message in messages %}<div class="flash {{ category }}">{{ message }}</div>{% endfor %}</div>{% endif %}
+      {% endwith %}
+      <div id="interaction-messages" class="flash-stack" aria-live="polite" hidden></div>
+      <div class="content-area">{% block content %}{% endblock %}</div>
+      <footer class="footer"><span class="brand-mark small">B</span><span>Fait pour construire de grandes choses, une brique à la fois.</span><span>Brick Buddy · Ta collection reste chez toi.</span></footer>
+    </main>
+  </div>
+  <dialog class="confirm-dialog" id="confirm-dialog">
+    <form method="dialog" class="confirm-dialog-content">
+      <span class="confirm-dialog-icon" aria-hidden="true">!</span>
+      <h2>Confirmer le retrait</h2>
+      <p data-confirm-message></p>
+      <div class="confirm-dialog-actions">
+        <button class="button button-muted" value="cancel">Annuler</button>
+        <button class="button button-danger" value="confirm">Retirer le set</button>
+      </div>
+    </form>
+  </dialog>
+</body>
+</html>

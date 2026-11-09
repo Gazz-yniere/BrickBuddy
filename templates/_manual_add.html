@@ -1,0 +1,12 @@
+<details class="manual-add">
+  <summary>＋ Ajouter des pièces manuellement</summary>
+  <form action="{{ url_for('add_part', set_id=set.id) }}" method="post" class="manual-form">
+    <input type="hidden" name="return_to" value="{{ return_to }}">
+    <label>Réf. pièce<input name="part_num" placeholder="3001" required></label>
+    <label>Nom<input name="part_name" placeholder="Brique 2 × 4"></label>
+    <label>Couleur<input name="color_name" placeholder="Noir"></label>
+    <label>ID couleur<input name="color_id" type="number" min="0" value="0"></label>
+    <label>Qté<input name="quantity" type="number" min="1" value="1" required></label>
+    <button class="button button-small" type="submit">Ajouter</button>
+  </form>
+</details>

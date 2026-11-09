@@ -1,0 +1,96 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="720" viewBox="0 0 1200 720" fill="none">
+  <defs>
+    <linearGradient id="background" x1="0" y1="0" x2="1200" y2="720" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#29231D"/>
+      <stop offset="1" stop-color="#151515"/>
+    </linearGradient>
+    <linearGradient id="glow" x1="940" y1="40" x2="1120" y2="260" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#D9904B" stop-opacity=".24"/>
+      <stop offset="1" stop-color="#D9904B" stop-opacity="0"/>
+    </linearGradient>
+    <filter id="shadow" x="170" y="76" width="960" height="594" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+      <feColorMatrix in="SourceAlpha" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+      <feOffset dy="16"/>
+      <feGaussianBlur stdDeviation="18"/>
+      <feComposite in2="hardAlpha" operator="out"/>
+      <feColorMatrix values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .35 0"/>
+      <feBlend in2="BackgroundImageFix" result="effect1_dropShadow"/>
+      <feBlend in="SourceGraphic" in2="effect1_dropShadow" result="shape"/>
+    </filter>
+  </defs>
+  <rect width="1200" height="720" rx="28" fill="url(#background)"/>
+  <circle cx="1060" cy="106" r="220" fill="url(#glow)"/>
+  <rect x="28" y="28" width="1144" height="664" rx="22" fill="#171717" stroke="#42403C"/>
+  <rect x="28.5" y="28.5" width="227" height="663" rx="21.5" fill="#191919"/>
+  <path d="M255 29v662" stroke="#393632"/>
+
+  <rect x="52" y="53" width="38" height="38" rx="12" fill="#C77932"/>
+  <rect x="61" y="46" width="10" height="11" rx="4" fill="#EDB25E"/>
+  <rect x="74" y="46" width="10" height="11" rx="4" fill="#EDB25E"/>
+  <path d="M68 63h7a6 6 0 0 1 4 11 5 5 0 0 1-4 9h-7V63Zm6 8a2 2 0 1 0 0-4h-1v4h1Zm1 7a2 2 0 1 0 0-4h-1v4h1Z" fill="#fff"/>
+  <text x="101" y="80" fill="#F6F1EA" font-family="Arial,sans-serif" font-size="21" font-weight="700">brick<tspan fill="#EDB25E">buddy</tspan></text>
+  <text x="54" y="137" fill="#88847F" font-family="Arial,sans-serif" font-size="10" font-weight="700" letter-spacing="2">MON ATELIER</text>
+
+  <rect x="45" y="157" width="194" height="43" rx="10" fill="#362A20" stroke="#60472F"/>
+  <text x="63" y="184" fill="#EDB25E" font-family="Arial,sans-serif" font-size="17">▦</text>
+  <text x="91" y="184" fill="#F1C48F" font-family="Arial,sans-serif" font-size="13" font-weight="700">Pièces à réunir</text>
+  <text x="63" y="232" fill="#B2ADA6" font-family="Arial,sans-serif" font-size="13">▤   Mes sets</text>
+  <text x="63" y="273" fill="#B2ADA6" font-family="Arial,sans-serif" font-size="13">▥   Inventaire</text>
+  <text x="63" y="314" fill="#B2ADA6" font-family="Arial,sans-serif" font-size="13">⌕   Pièces manquantes</text>
+
+  <rect x="47" y="566" width="190" height="94" rx="14" fill="#24211E" stroke="#494037"/>
+  <text x="64" y="594" fill="#EDB25E" font-family="Arial,sans-serif" font-size="16">✦</text>
+  <text x="64" y="619" fill="#F3EDE5" font-family="Arial,sans-serif" font-size="12" font-weight="700">Un peu de patience,</text>
+  <text x="64" y="640" fill="#A9A29A" font-family="Arial,sans-serif" font-size="11">et la collection prendra forme.</text>
+
+  <text x="291" y="68" fill="#8D8880" font-family="Arial,sans-serif" font-size="10" font-weight="700" letter-spacing="1.5">MON ATELIER  /  PIÈCES À RÉUNIR</text>
+  <text x="1035" y="68" fill="#E9B475" font-family="Arial,sans-serif" font-size="11" font-weight="700">Exporter la liste ↗</text>
+  <path d="M280 88h865" stroke="#34312D"/>
+
+  <text x="291" y="130" fill="#D99A57" font-family="Arial,sans-serif" font-size="10" font-weight="700" letter-spacing="2">✦  LE GRAND TRI</text>
+  <text x="291" y="178" fill="#F7F2EB" font-family="Arial,sans-serif" font-size="36" font-weight="700">Pièces à réunir</text>
+  <text x="291" y="204" fill="#AAA49C" font-family="Arial,sans-serif" font-size="13">Tous tes besoins, réunis au même endroit.</text>
+
+  <rect x="291" y="229" width="855" height="94" rx="15" fill="#22211F" stroke="#403C36"/>
+  <rect x="309" y="247" width="48" height="48" rx="14" fill="#3A2D20"/>
+  <text x="322" y="279" fill="#E7AA69" font-family="Arial,sans-serif" font-size="27" font-weight="400">＋</text>
+  <text x="376" y="264" fill="#F1ECE5" font-family="Arial,sans-serif" font-size="14" font-weight="700">Préparer un set</text>
+  <text x="376" y="286" fill="#A9A39B" font-family="Arial,sans-serif" font-size="11">Entre sa référence pour commencer à réunir ses pièces.</text>
+  <rect x="841" y="251" width="176" height="48" rx="9" fill="#191919" stroke="#48423A"/>
+  <text x="858" y="281" fill="#817C74" font-family="Arial,sans-serif" font-size="12">Ex. 10312 ou 31145-1</text>
+  <rect x="1027" y="251" width="99" height="48" rx="9" fill="#B86F32"/>
+  <text x="1045" y="281" fill="#fff" font-family="Arial,sans-serif" font-size="12" font-weight="700">Voir les pièces →</text>
+
+  <text x="291" y="366" fill="#C98B4B" font-family="Arial,sans-serif" font-size="10" font-weight="700" letter-spacing="1.5">SUIVI DES PIÈCES</text>
+  <text x="291" y="394" fill="#F5F0E9" font-family="Arial,sans-serif" font-size="18" font-weight="700">Sets à réunir</text>
+  <rect x="397" y="375" width="25" height="24" rx="7" fill="#37302A"/>
+  <text x="406" y="392" fill="#E5B47F" font-family="Arial,sans-serif" font-size="11" font-weight="700">2</text>
+
+  <rect x="291" y="414" width="855" height="235" rx="15" fill="#20201E" stroke="#413C35"/>
+  <rect x="312" y="434" width="78" height="78" rx="12" fill="#31271F"/>
+  <rect x="329" y="453" width="44" height="38" rx="8" fill="#C77932"/>
+  <rect x="337" y="445" width="12" height="11" rx="4" fill="#EDB25E"/>
+  <rect x="354" y="445" width="12" height="11" rx="4" fill="#EDB25E"/>
+  <path d="M335 467h9v17h-9zm13 0h9v17h-9z" fill="#F8D8B3"/>
+  <text x="408" y="451" fill="#F3EEE7" font-family="Arial,sans-serif" font-size="15" font-weight="700">Le jardin miniature</text>
+  <text x="408" y="473" fill="#A7A199" font-family="Arial,sans-serif" font-size="11">Réf. EX-001 · 248 pièces</text>
+  <text x="408" y="495" fill="#D59B5A" font-family="Arial,sans-serif" font-size="11">Rebrickable ↗</text>
+  <rect x="1048" y="440" width="70" height="50" rx="11" fill="#35271E"/>
+  <text x="1067" y="464" fill="#E9A968" font-family="Arial,sans-serif" font-size="18" font-weight="700">24</text>
+  <text x="1058" y="480" fill="#B49B81" font-family="Arial,sans-serif" font-size="9">à réunir</text>
+  <path d="M312 528h813" stroke="#393631"/>
+  <text x="312" y="555" fill="#E9B36F" font-family="Arial,sans-serif" font-size="12" font-weight="700">🟠</text>
+  <text x="339" y="555" fill="#F1ECE5" font-family="Arial,sans-serif" font-size="13" font-weight="700">Orange vif</text>
+  <text x="424" y="555" fill="#9E9890" font-family="Arial,sans-serif" font-size="11">4 références</text>
+  <text x="1056" y="555" fill="#E4A05A" font-family="Arial,sans-serif" font-size="17" font-weight="700">12</text>
+  <text x="1078" y="555" fill="#A59D94" font-family="Arial,sans-serif" font-size="10">à trouver</text>
+  <rect x="312" y="574" width="813" height="54" rx="11" fill="#292724"/>
+  <rect x="324" y="582" width="42" height="38" rx="8" fill="#38332D"/>
+  <path d="M337 591h16v20h-16z" fill="#B1A38D"/>
+  <circle cx="341" cy="588" r="3" fill="#D8C8B2"/><circle cx="349" cy="588" r="3" fill="#D8C8B2"/>
+  <text x="380" y="596" fill="#EAE4DC" font-family="Arial,sans-serif" font-size="11" font-weight="700">Plaque 2 × 4</text>
+  <text x="380" y="613" fill="#99928A" font-family="Arial,sans-serif" font-size="10">3020 · Orange vif</text>
+  <text x="1004" y="605" fill="#E8A15B" font-family="Arial,sans-serif" font-size="16" font-weight="700">8</text>
+  <text x="1023" y="605" fill="#A8A096" font-family="Arial,sans-serif" font-size="10">à trouver</text>
+</svg>

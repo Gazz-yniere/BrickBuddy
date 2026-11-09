@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block title %}Mes sets{% endblock %}
+{% block breadcrumb %}MES SETS{% endblock %}
+{% block content %}
+  <section class="page-intro">
+    <div><div class="eyebrow"><span>✦</span> TA COLLECTION</div><h1>Mes sets</h1><p>Les sets que tu as vérifiés et que tu possèdes, indépendamment des pièces en vrac.</p></div>
+    <div class="missing-total"><strong>{{ set_count }}</strong><span>set{{ 's' if set_count != 1 else '' }} suivi{{ 's' if set_count != 1 else '' }}</span></div>
+  </section>
+  <section class="add-set-card">
+    <div class="add-set-icon">＋</div><div class="add-set-copy"><h2>Ajouter directement un set</h2><p>Il sera ajouté à ta collection sans apparaître dans les sets à réunir.</p></div>
+    <form class="add-form" action="{{ url_for('add_set') }}" method="post">
+      <input type="hidden" name="return_to" value="sets">
+      <label class="sr-only" for="collection_set_num">Référence du set LEGO à ajouter à Mes sets</label>
+      <input id="collection_set_num" name="set_num" placeholder="Ex. 10312 ou 31145-1" required>
+      {% if not has_api_key %}<label class="sr-only" for="collection_theme_name">Thème du set (facultatif)</label><input id="collection_theme_name" name="theme_name" placeholder="Thème (facultatif)">{% endif %}
+      <button class="button button-primary" type="submit">Ajouter à Mes sets <span>→</span></button>
+      <button class="button button-outline" type="submit" name="all_parts_found" value="1">J'ai toutes les pièces ✓</button>
+    </form>
+  </section>
+  <div class="section-heading">
+    <div><div class="eyebrow">MES MODÈLES</div><h2>Sets suivis <span class="heading-count">{{ set_count }}</span></h2></div>
+    <form class="search-box set-search" method="get" action="{{ url_for('sets_page') }}"><span>⌕</span><input name="q" value="{{ search }}" placeholder="Chercher un set..." aria-label="Chercher un set"></form>
+  </div>
+  {% if theme_groups %}
+    <div class="collection-theme-list">
+      {% for theme in theme_groups %}
+        <details class="collection-theme" open>
+          <summary class="collection-theme-summary">
+            <span class="collection-theme-title">{{ theme.name }}</span>
+            <span class="collection-theme-count">{{ theme.sets|length }} set{{ 's' if theme.sets|length != 1 else '' }}</span>
+            <span class="collection-set-chevron" aria-hidden="true">⌄</span>
+          </summary>
+          <div class="collection-set-list">
+          {% for set in theme.sets %}
+          <details class="set-card collection-set-card" data-set-id="{{ set.id }}">
+          <summary class="collection-set-summary">
+            <div class="collection-set-heading">
+              {% if set.set_image_url %}<img class="collection-set-image" src="{{ set.set_image_url|local_image_url }}" alt="Image du set {{ set.set_num }}" loading="lazy">{% else %}<span class="collection-set-image collection-set-image-placeholder" aria-hidden="true">🧱</span>{% endif %}
+              <span class="set-title"><strong>{{ set.title }}{% if set.copy_count > 1 %} · exemplaire {{ set.copy_number }}{% endif %}</strong><small>Réf. {{ set.set_num }} · {{ set.year or 'Année inconnue' }} · {{ set.total }} pièces</small></span>
+              <span class="set-progress"><strong>{{ set.missing }}</strong><span>à trouver</span></span>
+              <span class="collection-set-chevron" aria-hidden="true">⌄</span>
+            </div>
+            <div class="collection-set-controls">
+              <a class="button button-outline button-small rebrickable-link" href="https://rebrickable.com/sets/{{ set.set_num }}/" target="_blank" rel="noopener noreferrer">Rebrickable ↗</a>
+              {% if not set.year and has_api_key %}<form action="{{ url_for('refresh_set_info', set_id=set.id) }}" method="post"><button class="button button-outline button-small" type="submit" title="Récupérer l'année depuis Rebrickable">Année</button></form>{% endif %}
+              {% if not set.set_image_url and has_api_key %}<form action="{{ url_for('refresh_set_image', set_id=set.id) }}" method="post"><button class="button button-outline button-small" type="submit" title="Récupérer l'image depuis Rebrickable">Image</button></form>{% endif %}
+              {% if (set.theme_name == 'Thème non renseigné' or set.theme_name.startswith('Thème ')) and has_api_key %}<form action="{{ url_for('refresh_set_theme', set_id=set.id) }}" method="post"><button class="button button-outline button-small" type="submit" title="Récupérer le thème depuis Rebrickable">Thème</button></form>{% endif %}
+              <form action="{{ url_for('complete_set_parts', set_id=set.id) }}" method="post"><input type="hidden" name="return_to" value="sets"><button class="button button-outline button-small" type="submit">{{ '✓ Tout trouvé' if set.missing else '↻ Tout chercher' }}</button></form>
+              <form action="{{ url_for('update_set_gathering', set_id=set.id) }}" method="post"><input type="hidden" name="in_gathering" value="{{ 0 if set.in_gathering else 1 }}"><button class="button button-outline button-small" type="submit" title="{{ 'Arrêter de chercher les pièces' if set.in_gathering else 'Ajouter les pièces à la recherche' }}">{{ 'Pause' if set.in_gathering else 'Suivre' }}</button></form>
+              <form action="{{ url_for('duplicate_set', set_id=set.id) }}" method="post"><input type="hidden" name="return_to" value="sets"><button class="icon-button set-copy-button copy-add" type="submit" title="Ajouter un exemplaire" aria-label="Ajouter un exemplaire de {{ set.title }}">+</button></form>
+              <form action="{{ url_for('sell_set', set_id=set.id) }}" method="post" data-confirm data-confirm-message="Retirer cet exemplaire de Mes sets ? Il sera considéré comme vendu et ses pièces ne compteront plus dans ton inventaire."><button class="icon-button set-copy-button copy-remove" type="submit" title="Retirer cet exemplaire vendu" aria-label="Retirer {{ set.title }} de Mes sets"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 7h16M10 11v6m4-6v6M5 7l1 14h12l1-14M9 7V4h6v3"/></svg></button></form>
+            </div>
+          </summary>
+          <div class="collection-set-content">
+            {% if set.parts %}
+              <div class="set-part-list">
+                {% for part in set.parts %}
+                  <article class="collection-part-card {{ 'part-done' if part.missing_quantity == 0 else '' }}">
+                    {% if part.image_url %}<img class="collection-part-image" src="{{ part.image_url|local_image_url }}" alt="{{ part.part_name }}" loading="lazy">{% else %}<div class="collection-part-image part-placeholder">▦</div>{% endif %}
+                    <div class="collection-part-copy"><strong>{{ part.part_name }}</strong><span>Réf. {{ part.part_num }} · {{ part.color_name }}</span><small>×{{ part.quantity }} dans le set</small></div>
+                    <form class="set-status-form collection-part-controls {{ 'is-complete' if part.missing_quantity == 0 else '' }}" action="{{ url_for('update_missing', part_id=part.part_id) }}" method="post" data-set-id="{{ set.id }}" data-quantity="{{ part.quantity }}">
+                      <input type="hidden" name="return_to" value="sets">
+                      <span class="set-missing-count" aria-label="{{ part.missing_quantity }} pièce{{ 's' if part.missing_quantity != 1 else '' }} manquante{{ 's' if part.missing_quantity != 1 else '' }}">{{ part.missing_quantity }}</span>
+                      <span class="collection-missing-label">à trouver</span>
+                      <button class="set-complete-part" type="submit" name="mark_complete" value="1" {{ 'disabled' if part.missing_quantity == 0 else '' }}>Tout trouvé</button>
+                      <button class="set-step-button" type="submit" name="change" value="-1" aria-label="Marquer une pièce trouvée de {{ part.part_name }}" title="Une pièce trouvée" {{ 'disabled' if part.missing_quantity == 0 else '' }}>−</button>
+                      <button class="set-step-button" type="submit" name="change" value="1" aria-label="Marquer une pièce manquante de {{ part.part_name }}" title="Une pièce manquante" {{ 'disabled' if part.missing_quantity == part.quantity else '' }}>+</button>
+                    </form>
+                  </article>
+                {% endfor %}
+              </div>
+            {% else %}<div class="empty-parts"><span>🧩</span><div><strong>Pas encore de pièces enregistrées</strong><small>Ajoute les pièces manuellement pour les retrouver dans la liste commune.</small></div></div>{% endif %}
+            {% with return_to='sets' %}{% include '_manual_add.html' %}{% endwith %}
+          </div>
+        </details>
+          {% endfor %}
+          </div>
+        </details>
+      {% endfor %}
+    </div>
+  {% else %}
+    <section class="empty-state"><div class="empty-emoji">🏗️</div><h2>{% if search %}Aucun set trouvé{% else %}Ta collection commence ici{% endif %}</h2><p>{% if search %}Essaie une autre référence ou un autre nom.{% else %}Quand tu auras vérifié un set, valide-le dans « Pièces à réunir » pour le retrouver ici.{% endif %}</p><a class="button button-primary" href="{{ url_for('pieces_page') }}">Voir les sets à réunir <span>→</span></a></section>
+  {% endif %}
+{% endblock %}

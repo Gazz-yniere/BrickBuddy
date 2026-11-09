@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}Pièces manquantes{% endblock %}
+{% block breadcrumb %}PIÈCES MANQUANTES{% endblock %}
+{% block content %}
+  <section class="page-intro">
+    <div><div class="eyebrow"><span>✦</span> LA LISTE DE CHASSE</div><h1>Pièces manquantes</h1><p>Toutes les pièces qui manquent à l’ensemble de tes sets possédés, regroupées pour les chercher ou les commander.</p></div>
+    <div class="missing-total"><strong id="missing-parts-total">{{ parts|sum(attribute='missing') }}</strong><span>pièces à trouver</span></div>
+  </section>
+  <section class="toolbar-card">
+    <form class="filter-form" method="get" action="{{ url_for('missing_page') }}">
+      <label class="search-box"><span>⌕</span><input name="q" value="{{ search }}" placeholder="Chercher une pièce, un set, une couleur..." aria-label="Rechercher les pièces manquantes"></label>
+      <label class="select-label"><span>Couleur</span><select name="color"><option value="">Toutes les couleurs</option>{% for color in colors %}<option value="{{ color }}" {{ 'selected' if color_filter == color else '' }}>{{ color }}</option>{% endfor %}</select></label>
+      <label class="select-label"><span>Trier par</span><select name="sort"><option value="color" {{ 'selected' if sort_by == 'color' else '' }}>Couleur</option><option value="name" {{ 'selected' if sort_by == 'name' else '' }}>Nom de la pièce</option><option value="missing" {{ 'selected' if sort_by == 'missing' else '' }}>Quantité à trouver</option></select></label>
+      <button class="button button-muted" type="submit">Appliquer</button>
+      {% if search or color_filter or sort_by != 'color' %}<a class="reset-link" href="{{ url_for('missing_page') }}">Effacer</a>{% endif %}
+    </form>
+  </section>
+  {% if groups %}
+    <div class="results-heading"><h2>À dénicher <span>{{ parts|length }} références</span></h2><span>{{ groups|length }} couleurs · {{ parts|sum(attribute='missing') }} pièces</span></div>
+    <div class="color-groups">
+      {% for group in groups %}
+        <details class="color-card color-group" data-color-group data-missing="{{ group.missing }}" {{ 'open' if group.missing else '' }}>
+          <summary class="color-header">
+            <span class="color-swatch {{ 'swatch-' ~ group.name|lower|replace(' ', '-') }}" title="{{ group.name }}"></span>
+            <div class="color-heading"><h3>{{ group.name }}</h3><span>{{ group.parts|length }} référence{{ 's' if group.parts|length != 1 else '' }}</span></div>
+            <span class="color-totals"><strong class="accent-missing" data-color-missing>{{ group.missing }}</strong><span>pièces à trouver</span></span>
+            <span class="color-group-chevron" aria-hidden="true">⌄</span>
+          </summary>
+          <div class="parts-grid">
+            {% for part in group.parts %}
+              <article class="piece-card">
+                <div class="part-image-wrap">
+                  {% if part.image_url %}<img class="part-image" src="{{ part.image_url|local_image_url }}" alt="{{ part.part_name }}" loading="lazy">{% else %}<div class="part-image part-placeholder">▦</div>{% endif %}
+                  <span class="part-image-label">{{ part.part_name }}</span>
+                </div>
+                <div class="piece-card-heading">
+                  <strong>{{ part.part_num }}</strong>
+                  <span class="part-missing-total"><strong class="accent-missing">{{ part.missing }}</strong><span>à trouver</span></span>
+                </div>
+                <div class="piece-set-list">
+                  {% for set in part.sets if set.missing %}
+                    <form class="set-status-form {{ 'is-complete' if set.missing == 0 else '' }}" action="{{ url_for('update_missing', part_id=set.part_id) }}" method="post" data-set-id="{{ set.id }}" data-quantity="{{ set.quantity }}">
+                      <input type="hidden" name="return_to" value="missing">
+                      <span class="set-tag" title="{{ set.title }}">{{ set.set_num }}{% if set.copy_count > 1 %} · #{{ set.copy_number }}{% endif %}<small>{{ set.title }} · ×{{ set.missing }} manquante{{ 's' if set.missing != 1 else '' }}</small></span>
+                      <span class="set-missing-count" aria-label="{{ set.missing }} pièce{{ 's' if set.missing != 1 else '' }} manquante{{ 's' if set.missing != 1 else '' }} pour {{ set.set_num }}">{{ set.missing }}</span>
+                      <button class="set-step-button" type="submit" name="change" value="-1" aria-label="Marquer une pièce trouvée de {{ set.title }}" title="Une pièce trouvée" {{ 'disabled' if set.missing == 0 else '' }}>−</button>
+                      <button class="set-step-button" type="submit" name="change" value="1" aria-label="Marquer une pièce manquante de {{ set.title }}" title="Une pièce manquante" {{ 'disabled' if set.missing == set.quantity else '' }}>+</button>
+                    </form>
+                  {% endfor %}
+                </div>
+              </article>
+            {% endfor %}
+          </div>
+        </details>
+      {% endfor %}
+    </div>
+  {% else %}
+    <section class="empty-state"><div class="empty-emoji">🎉</div><h2>{% if search or color_filter %}Aucune pièce manquante trouvée{% else %}Tout est trouvé !{% endif %}</h2><p>{% if search or color_filter %}Essaie un autre filtre.{% else %}Il n’y a plus de pièce à chercher pour le moment.{% endif %}</p><a class="button button-primary" href="{{ url_for('pieces_page') }}">Voir toutes les pièces <span>→</span></a></section>
+  {% endif %}
+  <section class="export-panel"><div class="export-icon">⇩</div><div class="export-copy"><h2>Besoin de commander ?</h2><p>Exporte uniquement les quantités encore manquantes de tes sets.</p></div><div class="export-actions"><a class="button button-outline" href="{{ url_for('export_bricklink', scope='owned') }}">BrickLink XML ↓</a><a class="button button-outline" href="{{ url_for('export_brickowl', scope='owned') }}">BrickOwl CSV ↓</a></div></section>
+{% endblock %}

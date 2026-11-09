@@ -1,0 +1,15 @@
+services:
+  legolist:
+    build: .
+    container_name: legolist
+    ports:
+      - "${PORT:-8000}:8000"
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      DATABASE_PATH: /data/legolist.db
+      REBRICKABLE_API_KEY: ${REBRICKABLE_API_KEY:-}
+    volumes:
+      - ./data:/data
+    restart: unless-stopped

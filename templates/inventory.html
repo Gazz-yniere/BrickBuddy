@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Inventaire complet{% endblock %}
+{% block breadcrumb %}INVENTAIRE{% endblock %}
+{% block content %}
+  <section class="page-intro">
+    <div><div class="eyebrow"><span>▥</span> TOUTES TES PIÈCES</div><h1>Mon inventaire</h1><p>Les pièces réellement trouvées dans tes sets, regroupées par couleur et référence.</p></div>
+    <div class="missing-total"><strong>{{ total_quantity }}</strong><span>pièces en tout</span></div>
+  </section>
+  <section class="toolbar-card">
+    <form class="filter-form" method="get" action="{{ url_for('inventory_page') }}">
+      <label class="search-box"><span>⌕</span><input name="q" value="{{ search }}" placeholder="Chercher une pièce, un set, une couleur..." aria-label="Rechercher dans l'inventaire"></label>
+      <label class="select-label"><span>Couleur</span><select name="color"><option value="">Toutes les couleurs</option>{% for color in colors %}<option value="{{ color }}" {{ 'selected' if color_filter == color else '' }}>{{ color }}</option>{% endfor %}</select></label>
+      <button class="button button-muted" type="submit">Appliquer</button>
+      {% if search or color_filter %}<a class="reset-link" href="{{ url_for('inventory_page') }}">Effacer</a>{% endif %}
+    </form>
+  </section>
+  {% if groups %}
+    <div class="results-heading"><h2>Inventaire complet <span>{{ part_count }} références</span></h2><span>{{ groups|length }} couleurs · {{ total_quantity }} pièces</span></div>
+    <div class="inventory-colors">
+      {% for group in groups %}
+        <details class="color-card inventory-color" open>
+          <summary class="color-header">
+            <span class="color-swatch {{ 'swatch-' ~ group.name|lower|replace(' ', '-') }}" title="{{ group.name }}"></span>
+            <div class="color-heading"><h3>{{ group.name }}</h3><span>{{ group.parts|length }} référence{{ 's' if group.parts|length != 1 else '' }}</span></div>
+            <span class="color-totals"><strong>{{ group.quantity }}</strong><span>pièces</span></span>
+            <span class="color-group-chevron" aria-hidden="true">⌄</span>
+          </summary>
+          <div class="inventory-parts">
+            {% for part in group.parts %}
+              <article class="inventory-part-card">
+                <div class="inventory-part-image">
+                  {% if part.image_url %}<img src="{{ part.image_url|local_image_url }}" alt="{{ part.part_name }}" loading="lazy">{% else %}<span aria-hidden="true">▦</span>{% endif %}
+                </div>
+                <div class="inventory-part-copy"><strong>{{ part.part_name }}</strong><span>Réf. {{ part.part_num }}</span></div>
+                <span class="inventory-part-quantity">×{{ part.quantity }}</span>
+              </article>
+            {% endfor %}
+          </div>
+        </details>
+      {% endfor %}
+    </div>
+  {% else %}
+    <section class="empty-state"><div class="empty-emoji">📦</div><h2>{% if search or color_filter %}Aucune pièce trouvée{% else %}Ton inventaire est vide{% endif %}</h2><p>{% if search or color_filter %}Essaie un autre mot ou une autre couleur.{% else %}Quand tu marques des pièces comme trouvées dans « Mes sets », elles apparaissent ici.{% endif %}</p><a class="button button-primary" href="{{ url_for('sets_page') }}">Voir Mes sets <span>→</span></a></section>
+  {% endif %}
+{% endblock %}
