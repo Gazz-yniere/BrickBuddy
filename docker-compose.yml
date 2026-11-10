@@ -1,6 +1,8 @@
 services:
   legolist:
-    build: .
+    image: ${DOCKERHUB_USERNAME:-local}/${DOCKERHUB_REPOSITORY:-brickbuddy}:${IMAGE_TAG:-latest}
+    build:
+      context: .
     container_name: legolist
     ports:
       - "${PORT:-8000}:8000"

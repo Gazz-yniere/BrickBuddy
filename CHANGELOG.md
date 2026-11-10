@@ -19,5 +19,6 @@ Les changements notables apportés à Brick Buddy sont consignés ici.
 - Présentation et documentation de démarrage réorganisées.
 - Tests automatisés sur GitHub Actions.
 - Workflow de publication multi-architecture vers Docker Hub sur les tags de version.
-- Prévisualisation illustrée de l’interface et badges de projet dans le README.
+- Validation Docker sans publication sur les pull requests et publication sur les releases.
+- Logo Brick Buddy dans le README et captures détaillées des pièces réelles du set 75457-1.
 - Exclusion des secrets, bases locales et caches du dépôt Git.
