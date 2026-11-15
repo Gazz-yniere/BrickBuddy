@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#171717">
+  <meta name="description" content="Brick Buddy : organise tes sets, tes pièces LEGO et ton vrac. Découvre la démo et la documentation.">
+  <title>Brick Buddy · Ta collection, pièce par pièce</title>
+  <link rel="icon" href="brickbuddy-logo.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="site.css">
+  <script src="demo.js" defer></script>
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-content">
+      <a class="brand" href="#accueil" aria-label="Brick Buddy, accueil"><img src="brickbuddy-logo.svg" alt="Brick Buddy" width="202" height="48"></a>
+      <nav aria-label="Navigation principale">
+        <a href="#fonctionnalites">Fonctionnalités</a>
+        <a href="#demo">Démo</a>
+        <a href="#documentation">Documentation</a>
+        <a class="nav-github" href="https://github.com/Gazz-yniere/BrickBuddy">GitHub ↗</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="accueil">
+    <section class="hero container">
+      <div>
+        <p class="eyebrow">TON ATELIER LEGO, CHEZ TOI</p>
+        <h1>Une place pour chaque pièce.</h1>
+        <p class="lead">Suis tes sets, retrouve les pièces manquantes et garde ton inventaire sous contrôle, une brique à la fois.</p>
+        <div class="actions">
+          <a class="button primary" href="#demo">Essayer la démo <span aria-hidden="true">→</span></a>
+          <a class="button secondary" href="#documentation">Installer Brick Buddy</a>
+        </div>
+        <p class="hero-note">Application auto-hébergée · Données locales · Open source</p>
+      </div>
+      <figure class="hero-image">
+        <img src="screenshots/pieces-a-reunir.png" alt="Aperçu de la page Pièces à réunir de Brick Buddy" width="1387" height="785">
+        <figcaption>Ton suivi, organisé par set et par pièce.</figcaption>
+      </figure>
+    </section>
+
+    <section id="fonctionnalites" class="section container">
+      <p class="eyebrow">UN ATELIER POUR CHAQUE BRIQUE</p>
+      <h2>Tout ce qu'il faut pour faire le tri.</h2>
+      <div class="feature-grid">
+        <article class="feature"><span class="feature-icon" aria-hidden="true">▦</span><h3>Pièces à réunir</h3><p>Regroupe tes besoins et suis les quantités manquantes par set, y compris les composants de figurines.</p></article>
+        <article class="feature"><span class="feature-icon" aria-hidden="true">▤</span><h3>Mes sets</h3><p>Garde une fiche par exemplaire et choisis les sets dont tu souhaites suivre les pièces.</p></article>
+        <article class="feature"><span class="feature-icon" aria-hidden="true">▥</span><h3>Inventaire et vrac</h3><p>Retrouve les pièces disponibles et utilise ton vrac pour compléter les sets à réunir.</p></article>
+        <article class="feature"><span class="feature-icon" aria-hidden="true">⇩</span><h3>Export et import</h3><p>Importe les inventaires avec Rebrickable et exporte tes listes en BrickLink XML ou BrickOwl CSV.</p></article>
+      </div>
+    </section>
+
+    <section id="demo" class="section demo-section">
+      <div class="container">
+        <div class="demo-intro">
+          <p class="eyebrow">À TOI DE JOUER</p>
+          <h2>Découvre ton futur atelier.</h2>
+          <p>Navigue entre les écrans et essaie le suivi des pièces et d'une figurine.</p>
+          <p class="notice"><strong>Démo statique :</strong> interface simplifiée avec un set fictif. Les modifications restent dans cette page et disparaissent au rechargement. L'import, le vrac et l'export nécessitent l'application complète.</p>
+        </div>
+        <div class="demo-window" id="demo-app">
+          <aside class="demo-sidebar">
+            <div class="demo-brand"><span>B</span> brick<b>buddy</b></div>
+            <span class="demo-side-label">ATELIER · DÉMO</span>
+            <nav class="demo-nav" aria-label="Navigation dans la démo">
+              <button type="button" data-view="pieces" aria-current="page"><span>▦</span> Pièces à réunir</button>
+              <button type="button" data-view="sets"><span>▤</span> Mes sets <small>1</small></button>
+              <button type="button" data-view="inventory"><span>▥</span> Inventaire</button>
+              <button type="button" data-view="missing"><span>⌕</span> Pièces manquantes <small data-total-missing>4</small></button>
+            </nav>
+            <div class="demo-sidebar-note"><strong>Un peu de patience,</strong><span>et la collection prendra forme.</span></div>
+          </aside>
+          <div class="demo-main">
+            <div class="demo-topbar"><span>MON ATELIER / <strong id="demo-breadcrumb">PIÈCES À RÉUNIR</strong></span><button type="button" id="demo-reset">Réinitialiser la démo ↺</button></div>
+            <section class="demo-screen" data-screen="pieces">
+              <p class="demo-eyebrow">✦ LE GRAND TRI</p>
+              <h3>Pièces à réunir</h3>
+              <p>Choisis les sets dont tu recherches les pièces.</p>
+              <div class="demo-section-heading"><div><span>SUIVI DES PIÈCES</span><h4>Sets à réunir <em>1</em></h4></div></div>
+              <article class="demo-set-card">
+                <span class="demo-set-avatar" aria-hidden="true">🧱</span>
+                <div class="demo-set-copy"><strong>Le petit atelier</strong><small>Réf. 00001-1 · 7 pièces · Set fictif</small></div>
+                <div class="demo-set-total"><strong data-total-missing>4</strong><small>à réunir</small></div>
+                <button class="demo-complete-set" type="button" data-complete-set>✓ Tout trouvé</button>
+              </article>
+              <div class="demo-toolbar"><label>⌕ <input id="demo-search" type="search" placeholder="Chercher une pièce ou une couleur..." aria-label="Chercher une pièce dans la démo"></label><label>Couleur <select id="demo-color"><option value="">Toutes les couleurs</option><option>Orange</option><option>Bleu</option><option>Figurine</option></select></label></div>
+              <div class="demo-section-heading"><h4>Pièces du set à réunir</h4><small>3 références · 3 couleurs</small></div>
+              <div class="demo-groups">
+                <details class="demo-color-group" data-group="orange" open><summary><span class="demo-swatch orange"></span><strong>Orange</strong><small>1 référence</small><span><b data-missing="brick">2</b> / 3 à trouver</span></summary><div class="demo-parts-grid" data-card="brick"></div></details>
+                <details class="demo-color-group" data-group="bleu" open><summary><span class="demo-swatch blue"></span><strong>Bleu</strong><small>1 référence</small><span><b data-missing="plate">1</b> / 3 à trouver</span></summary><div class="demo-parts-grid" data-card="plate"></div></details>
+                <details class="demo-color-group" data-group="figurine" open><summary><span class="demo-swatch yellow"></span><strong>Figurine</strong><small>1 référence</small><span><b data-missing="figure">1</b> / 1 à trouver</span></summary><div class="demo-parts-grid" data-card="figure"></div></details>
+              </div>
+              <p id="demo-no-results" hidden>Aucune pièce trouvée dans la démo.</p>
+            </section>
+            <section class="demo-screen" data-screen="sets" hidden>
+              <p class="demo-eyebrow">✦ TA COLLECTION</p><h3>Mes sets</h3><p>Les sets que tu possèdes, indépendamment des pièces en vrac.</p>
+              <div class="demo-section-heading"><div><span>MES MODÈLES</span><h4>Sets suivis <em>1</em></h4></div></div>
+              <details class="demo-collection" open><summary><span class="demo-set-avatar" aria-hidden="true">🧱</span><span class="demo-set-copy"><strong>Le petit atelier</strong><small>Réf. 00001-1 · Set fictif · 7 pièces</small></span><span class="demo-set-total"><strong data-total-missing>4</strong><small>à trouver</small></span><span>⌄</span></summary><div class="demo-collection-parts" id="demo-collection-parts"></div></details>
+            </section>
+            <section class="demo-screen" data-screen="inventory" hidden>
+              <p class="demo-eyebrow">▥ TON INVENTAIRE</p><h3>Mon inventaire</h3><p>Les pièces trouvées dans le set fictif.</p>
+              <div class="demo-stat-row"><div><strong data-total-found>3</strong><span>pièces trouvées</span></div><div><strong>0</strong><span>en vrac</span></div><div><strong data-total-found>3</strong><span>dans le set</span></div></div>
+              <div class="demo-section-heading"><h4>Pièces disponibles</h4></div><div class="demo-inventory-list" id="demo-inventory-list"></div>
+            </section>
+            <section class="demo-screen" data-screen="missing" hidden>
+              <p class="demo-eyebrow">✦ LA LISTE DE CHASSE</p><h3>Pièces manquantes</h3><p>Les pièces à retrouver pour compléter le set fictif.</p>
+              <div class="demo-section-heading"><h4>À dénicher</h4><small><b data-total-missing>4</b> pièces à trouver</small></div><div class="demo-collection-parts" id="demo-missing-list"></div><p id="demo-all-found" hidden>Tout est trouvé !</p>
+            </section>
+            <div id="demo-announcement" class="demo-announcement" role="status" aria-live="polite"></div>
+          </div>
+        </div>
+        <noscript><p class="notice">Active JavaScript pour afficher et utiliser cette démonstration.</p></noscript>
+      </div>
+    </section>
+
+    <section id="documentation" class="section container">
+      <p class="eyebrow">PRENDRE EN MAIN</p>
+      <h2>Installe ton propre atelier.</h2>
+      <div class="docs-grid">
+        <article class="feature">
+          <h3>1. Configure l'accès</h3>
+          <p>Copie le fichier <code>.env.example</code> en <code>.env</code>, puis renseigne une clé de session et un mot de passe. La clé Rebrickable est facultative.</p>
+          <a href="https://github.com/Gazz-yniere/BrickBuddy#configuration-commune">Voir la configuration →</a>
+        </article>
+        <article class="feature">
+          <h3>2. Lance l'application</h3>
+          <p>Utilise Python et SQLite en local, ou démarre le conteneur avec Docker Compose. Les données restent sur ta machine.</p>
+          <a href="https://github.com/Gazz-yniere/BrickBuddy#lancer-en-local">Installation locale →</a><br>
+          <a href="https://github.com/Gazz-yniere/BrickBuddy#lancer-avec-limage-docker">Installation Docker →</a>
+        </article>
+        <article class="feature">
+          <h3>3. Construis ta collection</h3>
+          <p>Ajoute un set, suis les pièces trouvées et utilise les filtres pour retrouver ce qu'il te manque.</p>
+          <a href="https://github.com/Gazz-yniere/BrickBuddy#utiliser-brick-buddy">Guide d'utilisation →</a>
+        </article>
+      </div>
+    </section>
+  </main>
+  <footer class="site-footer">
+    <div class="container footer-content">
+      <span>Brick Buddy · Fait pour construire de grandes choses.</span>
+      <span>Projet non officiel, sans affiliation ni approbation de LEGO® ou du groupe LEGO.</span>
+      <a href="https://github.com/Gazz-yniere/BrickBuddy">Code source et licence ↗</a>
+    </div>
+  </footer>
+</body>
+</html>

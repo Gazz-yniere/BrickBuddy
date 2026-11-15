@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block title %}Vérifier un set{% endblock %}
+{% block breadcrumb %}VÉRIFIER UN SET{% endblock %}
+{% block content %}
+  <section class="page-intro">
+    <div>
+      <div class="eyebrow"><span>✦</span> VÉRIFICATION</div>
+      <h1>Vérifier un set</h1>
+      <p>Saisis la référence d’un set LEGO : on compare son inventaire avec ton vrac, tes sets déjà rangés et les pièces réservées à tes sets à réunir, pour savoir quoi chercher ou commander.</p>
+    </div>
+    <form class="verify-form" method="get" action="{{ url_for('verify_set_page') }}">
+      <label class="sr-only" for="verify-set-num">Référence du set LEGO</label>
+      <input id="verify-set-num" name="set_num" placeholder="Ex. 10312" value="{{ set_num }}" required>
+      <button class="button button-primary" type="submit">Vérifier <span>→</span></button>
+    </form>
+  </section>
+
+  {% if error %}
+    <section class="notice-card">{{ error }}</section>
+  {% endif %}
+
+  {% if checked %}
+    {% set summary = summary or {} %}
+    <section class="verify-result">
+      <div class="verify-bandeau">
+        {% if set_info and set_info.set_img_url %}<img class="verify-set-img" src="{{ set_info.set_img_url|local_image_url }}" alt="Image du set {{ set_num }}">{% else %}<span class="verify-set-img-placeholder" aria-hidden="true">🧱</span>{% endif %}
+        <div class="verify-set-copy">
+          <h2>{{ set_info.name if set_info else set_num }}</h2>
+          <span>Réf. {{ set_num }}{% if set_info and set_info.year %} · {{ set_info.year }}{% endif %}{% if rows %} · {{ rows|length }} références{% endif %}</span>
+        </div>
+      </div>
+
+      <div class="verify-summary">
+        <div class="summary-tile"><strong>{{ summary.needed }}</strong><span>à réunir</span></div>
+        <div class="summary-tile"><strong>{{ summary.from_stock }}</strong><span>dispo en vrac</span></div>
+        <div class="summary-tile"><strong>{{ summary.from_sets }}</strong><span>dans un set</span></div>
+        <div class="summary-tile {{ 'accent-missing' if summary.to_buy > 0 else '' }} {{ 'accent-found' if summary.complete else '' }}"><strong>{{ summary.to_buy }}</strong><span>à acheter</span></div>
+      </div>
+
+      <h2 class="verify-list-title">Pièces du set <span>{{ rows|length }} référence{{ 's' if rows|length != 1 else '' }}</span></h2>
+      <div class="verify-list">
+        {% for row in rows %}
+          <article class="verify-row" data-part="{{ row.part_num }}" data-color="{{ row.color_id }}" data-stock="{{ row.stock }}" data-sets="{{ row.in_sets }}" data-to-buy="{{ row.to_buy }}">
+            <div class="verify-row-thumb">
+              {% if row.image_url %}<img src="{{ row.image_url|local_image_url }}" alt="{{ row.part_name }}" loading="lazy">{% else %}<span aria-hidden="true">▦</span>{% endif %}
+            </div>
+            <div class="verify-row-copy">
+              <strong>{{ row.part_name }}</strong><span>Réf. {{ row.part_num }}</span>
+            </div>
+            <div class="verify-row-qty">
+              <span class="verify-qty"><strong>{{ row.needed }}</strong><span>besoin</span></span>
+              <span class="verify-qty"><strong>{{ row.stock }}</strong><span>vrac</span></span>
+              <span class="verify-qty"><strong>{{ row.in_sets }}</strong><span>sets</span></span>
+              <span class="verify-badge {{ 'accent-found' if row.to_buy == 0 else 'accent-missing' }}">{{ row.to_buy }}<span class="sr-only"> à acheter</span></span>
+            </div>
+          </article>
+        {% endfor %}
+      </div>
+
+      <div class="verify-cta">
+        {% if existing_set_id %}
+          <form action="{{ url_for('take_stock_for_set', set_id=existing_set_id) }}" method="post">
+            <input type="hidden" name="return_to" value="verify">
+            <button class="button button-primary" type="submit">Prendre le vrac <span>→</span></button>
+          </form>
+          <a class="button button-outline" href="{{ url_for('pieces_page') }}">Voir les sets à réunir <span>→</span></a>
+        {% else %}
+          <form action="{{ url_for('add_set') }}" method="post">
+            <input type="hidden" name="set_num" value="{{ set_num }}">
+            <input type="hidden" name="title" value="{{ set_info.name if set_info else '' }}">
+            <input type="hidden" name="theme_name" value="">
+            <input type="hidden" name="return_to" value="pieces">
+            <button class="button button-primary" type="submit">Ajouter aux sets à réunir <span>→</span></button>
+          </form>
+          <p class="verify-note">Une fois le set ajouté, retrouve ses pièces dans « Pièces à réunir » et utilise le bouton « Prendre dans le vrac » sur chaque pièce disponible.</p>
+        {% endif %}
+        <p class="verify-note">Prendre des pièces du vrac ne change pas ton total possédé : c’est simplement un transfert entre l’emplacement « vrac » et un set.</p>
+      </div>
+    </section>
+  {% endif %}
+{% endblock %}

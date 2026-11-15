@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% import "_minifig_parts.html" as minifig_ui %}
 {% block title %}Pièces manquantes{% endblock %}
 {% block breadcrumb %}PIÈCES MANQUANTES{% endblock %}
 {% block content %}
@@ -20,34 +21,39 @@
     <div class="color-groups">
       {% for group in groups %}
         <details class="color-card color-group" data-color-group data-missing="{{ group.missing }}" {{ 'open' if group.missing else '' }}>
-          <summary class="color-header">
+          <summary class="color-header"{% if group.hex %} style="--brick: {{ group.hex }}"{% endif %}>
             <span class="color-swatch {{ 'swatch-' ~ group.name|lower|replace(' ', '-') }}" title="{{ group.name }}"></span>
             <div class="color-heading"><h3>{{ group.name }}</h3><span>{{ group.parts|length }} référence{{ 's' if group.parts|length != 1 else '' }}</span></div>
-            <span class="color-totals"><strong class="accent-missing" data-color-missing>{{ group.missing }}</strong><span>pièces à trouver</span></span>
+            <span class="color-totals"><strong class="accent-missing" data-color-missing>{{ group.missing }}</strong><span class="part-total" data-color-total>/{{ group.quantity }}</span><span>pièces à trouver</span></span>
             <span class="color-group-chevron" aria-hidden="true">⌄</span>
           </summary>
           <div class="parts-grid">
             {% for part in group.parts %}
-              <article class="piece-card">
-                <div class="part-image-wrap">
+                {% set visible_sets = part.sets|selectattr('missing')|list %}
+                <article class="piece-card">
+                  <div class="part-image-wrap">
                   {% if part.image_url %}<img class="part-image" src="{{ part.image_url|local_image_url }}" alt="{{ part.part_name }}" loading="lazy">{% else %}<div class="part-image part-placeholder">▦</div>{% endif %}
                   <span class="part-image-label">{{ part.part_name }}</span>
                 </div>
                 <div class="piece-card-heading">
                   <strong>{{ part.part_num }}</strong>
-                  <span class="part-missing-total"><strong class="accent-missing">{{ part.missing }}</strong><span>à trouver</span></span>
+                  <span class="part-missing-total" data-quantity="{{ part.quantity }}"><strong class="accent-missing">{{ part.missing }}</strong><span class="part-total">/{{ part.quantity }}</span><span>à trouver</span></span>
                 </div>
                 <div class="piece-set-list">
-                  {% for set in part.sets if set.missing %}
-                    <form class="set-status-form {{ 'is-complete' if set.missing == 0 else '' }}" action="{{ url_for('update_missing', part_id=set.part_id) }}" method="post" data-set-id="{{ set.id }}" data-quantity="{{ set.quantity }}">
+                  {% if visible_sets|length > 1 %}<div class="set-list-multi">{% endif %}
+                  {% for set in visible_sets %}
+                    <form class="set-status-form {{ 'is-complete' if set.missing == 0 else '' }} set-tone-{{ set.id % 6 }}" action="{{ url_for('update_missing', part_id=set.part_id) }}" method="post" data-set-id="{{ set.id }}" data-quantity="{{ set.quantity }}">
                       <input type="hidden" name="return_to" value="missing">
-                      <span class="set-tag" title="{{ set.title }}">{{ set.set_num }}{% if set.copy_count > 1 %} · #{{ set.copy_number }}{% endif %}<small>{{ set.title }} · ×{{ set.missing }} manquante{{ 's' if set.missing != 1 else '' }}</small></span>
+                      {% set theme_name = set.theme_name if set.theme_name and set.theme_name != 'Thème non renseigné' else '' %}
+                      <span class="set-tag" title="{{ set.title }}">{{ set.set_num }}{% if set.copy_count > 1 %} · #{{ set.copy_number }}{% endif %}<small>{{ set.title }} · ×{{ set.missing }} manquante{{ 's' if set.missing != 1 else '' }}</small><small class="set-meta">{% if set.year %}{{ set.year }}{% if theme_name %} · {% endif %}{% endif %}{{ theme_name }}</small></span>
                       <span class="set-missing-count" aria-label="{{ set.missing }} pièce{{ 's' if set.missing != 1 else '' }} manquante{{ 's' if set.missing != 1 else '' }} pour {{ set.set_num }}">{{ set.missing }}</span>
                       <button class="set-step-button" type="submit" name="change" value="-1" aria-label="Marquer une pièce trouvée de {{ set.title }}" title="Une pièce trouvée" {{ 'disabled' if set.missing == 0 else '' }}>−</button>
                       <button class="set-step-button" type="submit" name="change" value="1" aria-label="Marquer une pièce manquante de {{ set.title }}" title="Une pièce manquante" {{ 'disabled' if set.missing == set.quantity else '' }}>+</button>
                     </form>
                   {% endfor %}
+                  {% if visible_sets|length > 1 %}</div>{% endif %}
                 </div>
+                {% if part.item_type == 'minifig' %}{{ minifig_ui.render(part.part_num, minifig_parts) }}{% endif %}
               </article>
             {% endfor %}
           </div>

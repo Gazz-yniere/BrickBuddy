@@ -2,6 +2,30 @@
 
 Les changements notables apportés à Brick Buddy sont consignés ici.
 
+## 1.0.1
+
+### Ajouté
+
+- Suivi des composants de figurines, avec quantités distinctes pour chaque set
+  et prise en compte de plusieurs exemplaires d'une même figurine.
+- Vérification d'un set à partir du vrac, aperçu des quantités et transfert
+  des pièces disponibles.
+- Site GitHub Pages de présentation et de documentation, avec démo interactive
+  autonome : navigation entre les vues, recherche et suivi d'un set et d'une
+  figurine fictifs, sans sauvegarde ni serveur.
+- Guide de contribution et licence MIT.
+
+### Modifié
+
+- Synchronisation entre l'état d'une figurine et les quantités de ses
+  composants ; les états sont conservés à l'actualisation de l'inventaire.
+- Images et commandes des pièces de figurines agrandies et harmonisées avec les
+  autres pièces, noms tronqués et couleurs affichées sur les images.
+- Boutons des sets alignés dans « Mes sets » et prise depuis le vrac accessible
+  par pièce dans « Pièces à réunir ».
+- Suppression de l'ajout manuel sur les cartes « Sets à réunir » ; il reste
+  disponible dans « Mes sets ».
+
 ## Première version publique
 
 ### Fonctionnalités

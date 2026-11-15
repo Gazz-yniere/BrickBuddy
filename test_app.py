@@ -123,7 +123,7 @@ class LegoListTests(unittest.TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.location, "/pieces")
 
-    def test_login_limits_failed_attempts_and_requires_csrf(self):
+    def test_login_rejects_wrong_password_and_requires_csrf(self):
         client = legolist.app.test_client()
         login_page = client.get("/login")
         self.assertEqual(login_page.status_code, 200)
@@ -134,13 +134,23 @@ class LegoListTests(unittest.TestCase):
             "/login", data={"csrf_token": "wrong-token", "password": "test-password"}
         )
         self.assertEqual(invalid_csrf.status_code, 400)
-        for _ in range(5):
+        for _ in range(6):
             response = client.post(
                 "/login",
                 data={"csrf_token": csrf_token, "password": "wrong-password"},
             )
-        self.assertEqual(response.status_code, 429)
-        self.assertTrue(response.headers["Retry-After"])
+            self.assertEqual(response.status_code, 401)
+            self.assertIn("Mot de passe incorrect.", response.get_data(as_text=True))
+            self.assertNotIn(
+                "Trop de tentatives", response.get_data(as_text=True)
+            )
+
+        response = client.post(
+            "/login",
+            data={"csrf_token": csrf_token, "password": "test-password-123"},
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.location, "/pieces")
 
         logout_without_csrf = self.client.post("/logout")
         self.assertEqual(logout_without_csrf.status_code, 400)
@@ -206,6 +216,297 @@ class LegoListTests(unittest.TestCase):
                 "SELECT missing_quantity FROM set_parts WHERE id = ?", (part_id,)
             ).fetchone()
         self.assertEqual(part["missing_quantity"], 1)
+
+    def test_manual_part_entry_is_only_shown_in_collection(self):
+        set_id = self.add_set_and_part()
+        gathering_page = self.client.get("/pieces")
+        self.assertNotIn("Ajouter des pièces manuellement".encode(), gathering_page.data)
+        self.assertIn(b"Mes sets", gathering_page.data)
+
+        self.client.post(f"/sets/{set_id}/collect")
+        collection_page = self.client.get("/sets")
+        self.assertIn("Ajouter des pièces manuellement".encode(), collection_page.data)
+        self.assertIn(
+            f'action="/sets/{set_id}/parts"'.encode(), collection_page.data
+        )
+
+    def test_minifig_parts_can_be_marked_found_and_remain_found_after_refresh(self):
+        response = self.client.post(
+            "/sets",
+            data={"set_num": "10312", "title": "Le jazz club"},
+        )
+        self.assertEqual(response.status_code, 302)
+        with legolist.database() as connection:
+            set_id = connection.execute("SELECT id FROM sets").fetchone()["id"]
+            connection.execute(
+                """
+                INSERT INTO set_parts
+                    (set_id, part_num, part_name, color_id, color_name,
+                     quantity, missing_quantity, item_type)
+                VALUES (?, 'fig-000123', 'Figurine test', 0, 'Figurine', 1, 1, 'minifig')
+                """,
+                (set_id,),
+            )
+            legolist.replace_set_minifig_parts(
+                connection,
+                set_id,
+                [
+                    {
+                        "fig_num": "fig-000123",
+                        "part_num": "3001",
+                        "part_name": "Brique 2 x 4",
+                        "color_id": 4,
+                        "color_name": "Rouge",
+                        "quantity": 1,
+                    }
+                ],
+            )
+            part_id = connection.execute(
+                "SELECT id FROM minifig_parts WHERE set_id = ?", (set_id,)
+            ).fetchone()["id"]
+
+        page = self.client.get("/pieces")
+        self.assertEqual(page.status_code, 200)
+        self.assertIn(b'class="minifig-part-status-form', page.data)
+        self.assertIn(b'name="mark_complete" value="1"', page.data)
+        response = self.client.post(
+            f"/minifig-parts/{part_id}/status",
+            data={"status": "found"},
+            headers={"X-Requested-With": "XMLHttpRequest"},
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.get_json()["missing_quantity"], 0)
+
+        with legolist.database() as connection:
+            legolist.replace_set_minifig_parts(
+                connection,
+                set_id,
+                [
+                    {
+                        "fig_num": "fig-000123",
+                        "part_num": "3001",
+                        "part_name": "Brique 2 x 4",
+                        "color_id": 4,
+                        "color_name": "Rouge",
+                        "quantity": 2,
+                    }
+                ],
+            )
+            part = connection.execute(
+                "SELECT id, quantity, missing_quantity FROM minifig_parts WHERE set_id = ?",
+                (set_id,),
+            ).fetchone()
+            part_id = part["id"]
+        self.assertEqual((part["quantity"], part["missing_quantity"]), (2, 1))
+
+        response = self.client.post(
+            f"/minifig-parts/{part_id}/status",
+            data={"status": "missing"},
+            headers={"X-Requested-With": "XMLHttpRequest"},
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.get_json()["missing_quantity"], 2)
+
+    def test_complete_set_parts_updates_minifig_parts(self):
+        set_id = self.add_set_and_part()
+        with legolist.database() as connection:
+            connection.execute(
+                """
+                INSERT INTO minifig_parts
+                    (set_id, fig_num, part_num, part_name, color_id, color_name,
+                     quantity, missing_quantity)
+                VALUES (?, 'fig-000123', '3001', 'Brique', 4, 'Rouge', 2, 2)
+                """,
+                (set_id,),
+            )
+
+        self.client.post(f"/sets/{set_id}/complete-parts")
+        with legolist.database() as connection:
+            missing_quantity = connection.execute(
+                "SELECT missing_quantity FROM minifig_parts WHERE set_id = ?",
+                (set_id,),
+            ).fetchone()["missing_quantity"]
+        self.assertEqual(missing_quantity, 0)
+
+        self.client.post(f"/sets/{set_id}/complete-parts")
+        with legolist.database() as connection:
+            missing_quantity = connection.execute(
+                "SELECT missing_quantity FROM minifig_parts WHERE set_id = ?",
+                (set_id,),
+            ).fetchone()["missing_quantity"]
+        self.assertEqual(missing_quantity, 2)
+
+    def test_minifig_and_components_track_quantities_together(self):
+        set_id = self.add_set_and_part()
+        with legolist.database() as connection:
+            cursor = connection.execute(
+                """
+                INSERT INTO set_parts
+                    (set_id, part_num, part_name, color_id, color_name,
+                     quantity, missing_quantity, item_type)
+                VALUES (?, 'fig-001', 'Personnage', 0, 'Figurine', 2, 2, 'minifig')
+                """,
+                (set_id,),
+            )
+            fig_id = cursor.lastrowid
+            legolist.replace_set_minifig_parts(
+                connection, set_id,
+                [
+                    {"fig_num": "fig-001", "part_num": "head", "part_name": "Tête",
+                     "color_id": 1, "color_name": "Jaune", "quantity": 1},
+                    {"fig_num": "fig-001", "part_num": "hand", "part_name": "Main",
+                     "color_id": 1, "color_name": "Jaune", "quantity": 2},
+                ],
+            )
+            components = {
+                row["part_num"]: row["id"]
+                for row in connection.execute(
+                    "SELECT id, part_num FROM minifig_parts WHERE set_id = ?", (set_id,)
+                )
+            }
+
+        headers = {"X-Requested-With": "XMLHttpRequest"}
+        response = self.client.post(
+            f"/minifig-parts/{components['head']}/status",
+            data={"change": "-1"}, headers=headers,
+        )
+        self.assertEqual(response.status_code, 200)
+        self.client.post(
+            f"/minifig-parts/{components['hand']}/status",
+            data={"change": "-1"}, headers=headers,
+        )
+        self.client.post(
+            f"/minifig-parts/{components['hand']}/status",
+            data={"change": "-1"}, headers=headers,
+        )
+        with legolist.database() as connection:
+            missing = connection.execute(
+                "SELECT missing_quantity FROM set_parts WHERE id = ?", (fig_id,)
+            ).fetchone()[0]
+            component_missing = {
+                row["part_num"]: row["missing_quantity"]
+                for row in connection.execute(
+                    "SELECT part_num, missing_quantity FROM minifig_parts WHERE set_id = ?",
+                    (set_id,),
+                )
+            }
+        self.assertEqual(missing, 1)
+        self.assertEqual(component_missing, {"head": 1, "hand": 2})
+
+        self.client.post(
+            f"/parts/{fig_id}/missing", data={"mark_complete": "1"}, headers=headers
+        )
+        with legolist.database() as connection:
+            self.assertEqual(
+                connection.execute(
+                    "SELECT SUM(missing_quantity) FROM minifig_parts WHERE set_id = ?",
+                    (set_id,),
+                ).fetchone()[0],
+                0,
+            )
+        self.client.post(
+            f"/minifig-parts/{components['head']}/status",
+            data={"change": "1"}, headers=headers,
+        )
+        with legolist.database() as connection:
+            self.assertEqual(
+                connection.execute(
+                    "SELECT missing_quantity FROM set_parts WHERE id = ?", (fig_id,)
+                ).fetchone()[0],
+                1,
+            )
+        self.client.post(
+            f"/parts/{fig_id}/missing", data={"change": "1"}, headers=headers
+        )
+        with legolist.database() as connection:
+            component_missing = {
+                row["part_num"]: row["missing_quantity"]
+                for row in connection.execute(
+                    "SELECT part_num, missing_quantity FROM minifig_parts WHERE set_id = ?",
+                    (set_id,),
+                )
+            }
+        self.assertEqual(component_missing, {"head": 2, "hand": 2})
+
+    def test_existing_minifig_tracking_is_migrated_once(self):
+        set_id = self.add_set_and_part()
+        with legolist.database() as connection:
+            connection.execute(
+                """
+                INSERT INTO set_parts
+                    (set_id, part_num, part_name, color_id, color_name,
+                     quantity, missing_quantity, item_type)
+                VALUES (?, 'fig-001', 'Personnage', 0, 'Figurine', 3, 2, 'minifig')
+                """,
+                (set_id,),
+            )
+            connection.execute(
+                """
+                INSERT INTO minifig_parts
+                    (set_id, fig_num, part_num, part_name, color_id, color_name,
+                     quantity, missing_quantity, tracking_version)
+                VALUES (?, 'fig-001', 'hand', 'Main', 1, 'Jaune', 2, 2, 0)
+                """,
+                (set_id,),
+            )
+        legolist.initialize_database()
+        legolist.initialize_database()
+        with legolist.database() as connection:
+            component = connection.execute(
+                "SELECT missing_quantity, tracking_version FROM minifig_parts WHERE set_id = ?",
+                (set_id,),
+            ).fetchone()
+            parent = connection.execute(
+                "SELECT missing_quantity FROM set_parts WHERE set_id = ? AND part_num = 'fig-001'",
+                (set_id,),
+            ).fetchone()
+        self.assertEqual((component["missing_quantity"], component["tracking_version"]), (4, 1))
+        self.assertEqual(parent["missing_quantity"], 2)
+
+    def test_shared_minifig_component_updates_only_its_set(self):
+        first_set = self.add_set_and_part()
+        self.client.post("/sets", data={"set_num": "31145"})
+        with legolist.database() as connection:
+            second_set = connection.execute(
+                "SELECT id FROM sets WHERE id != ?", (first_set,)
+            ).fetchone()[0]
+            component_ids = []
+            for set_id in (first_set, second_set):
+                connection.execute(
+                    """
+                    INSERT INTO set_parts
+                        (set_id, part_num, part_name, color_id, color_name,
+                         quantity, missing_quantity, item_type)
+                    VALUES (?, 'fig-001', 'Personnage', 0, 'Figurine', 1, 1, 'minifig')
+                    """,
+                    (set_id,),
+                )
+                legolist.replace_set_minifig_parts(
+                    connection, set_id,
+                    [{"fig_num": "fig-001", "part_num": "head", "part_name": "Tête",
+                      "color_id": 1, "color_name": "Jaune", "quantity": 1}],
+                )
+                component_ids.append(
+                    connection.execute(
+                        "SELECT id FROM minifig_parts WHERE set_id = ?", (set_id,)
+                    ).fetchone()[0]
+                )
+        self.client.post(
+            f"/minifig-parts/{component_ids[0]}/status",
+            data={"mark_complete": "1"},
+            headers={"X-Requested-With": "XMLHttpRequest"},
+        )
+        with legolist.database() as connection:
+            parents = connection.execute(
+                """
+                SELECT set_id, missing_quantity FROM set_parts
+                WHERE part_num = 'fig-001' ORDER BY set_id
+                """
+            ).fetchall()
+        self.assertEqual(
+            [(row["set_id"], row["missing_quantity"]) for row in parents],
+            [(first_set, 0), (second_set, 1)],
+        )
 
     def test_pages_aggregate_shared_pieces_and_filter_missing_parts(self):
         first_set_id = self.add_set_and_part()
@@ -668,10 +969,13 @@ class LegoListTests(unittest.TestCase):
                 with patch.object(
                     legolist, "fetch_theme_name", return_value="Creator"
                 ) as fetch_theme:
-                    response = self.client.post(
-                        "/sets",
-                        data={"set_num": "10312", "return_to": "sets"},
-                    )
+                    with patch.object(
+                        legolist, "fetch_minifig_parts_for_set", return_value=[]
+                    ):
+                        response = self.client.post(
+                            "/sets",
+                            data={"set_num": "10312", "return_to": "sets"},
+                        )
 
         self.assertEqual(response.status_code, 302)
         fetch_theme.assert_called_once_with(22)
@@ -736,14 +1040,17 @@ class LegoListTests(unittest.TestCase):
                 "fetch_set_inventory",
                 return_value=({"name": "Set importé", "set_img_url": ""}, imported_parts),
             ):
-                response = self.client.post(
-                    "/sets",
-                    data={
-                        "set_num": "10312",
-                        "return_to": "sets",
-                        "all_parts_found": "1",
-                    },
-                )
+                with patch.object(
+                    legolist, "fetch_minifig_parts_for_set", return_value=[]
+                ):
+                    response = self.client.post(
+                        "/sets",
+                        data={
+                            "set_num": "10312",
+                            "return_to": "sets",
+                            "all_parts_found": "1",
+                        },
+                    )
         self.assertEqual(response.status_code, 302)
         with legolist.database() as connection:
             part = connection.execute(
@@ -1311,7 +1618,13 @@ class LegoListTests(unittest.TestCase):
                     ],
                 ),
             ):
-                response = self.client.post("/sets", data={"set_num": "10312"})
+                with patch.object(
+                    legolist, "fetch_minifig_parts_for_set", return_value=[]
+                ):
+                    response = self.client.post(
+                        "/sets",
+                        data={"set_num": "10312"},
+                    )
         self.assertEqual(response.status_code, 302)
         with legolist.database() as connection:
             row = connection.execute(
@@ -1352,6 +1665,1264 @@ class LegoListTests(unittest.TestCase):
                 _, parts = legolist.fetch_set_inventory("10312")
 
         self.assertEqual([part["part_num"] for part in parts], ["3001"])
+
+    def test_set_parts_table_has_item_type_defaulting_to_part(self):
+        with legolist.database() as connection:
+            columns = {
+                row["name"]: row
+                for row in connection.execute("PRAGMA table_info(set_parts)")
+            }
+        self.assertIn("item_type", columns)
+        self.assertEqual(columns["item_type"]["dflt_value"], "'part'")
+        set_id = self.add_set_and_part()
+        with legolist.database() as connection:
+            row = connection.execute(
+                "SELECT item_type FROM set_parts WHERE set_id = ?", (set_id,)
+            ).fetchone()
+        self.assertEqual(row["item_type"], "part")
+
+    def test_fetch_set_inventory_includes_minifigs_and_skips_spares(self):
+        def fake_rebrickable_get(path):
+            if "/minifigs/" in path:
+                return {
+                    "results": [
+                        {
+                            "set_num": "fig-000123",
+                            "set_name": "Figurine Harry Potter",
+                            "quantity": 1,
+                            "set_img_url": "https://example.test/fig.jpg",
+                        },
+                        {
+                            "set_num": "fig-000987",
+                            "set_name": "Figurine inutile",
+                            "quantity": 0,
+                            "set_img_url": "",
+                        },
+                    ],
+                    "next": None,
+                }
+            return {
+                "results": [
+                    {
+                        "part": {
+                            "part_num": "3001",
+                            "name": "Brique 2 x 4",
+                            "part_img_url": "https://example.test/3001.png",
+                        },
+                        "color": {"id": 4, "name": "Rouge"},
+                        "quantity": 2,
+                    },
+                    {
+                        "part": {"part_num": "3002", "name": "Pièce de rechange"},
+                        "color": {"id": 4, "name": "Rouge"},
+                        "quantity": 1,
+                        "is_spare": True,
+                    },
+                ],
+                "next": None,
+            }
+
+        with patch.dict("os.environ", {"REBRICKABLE_API_KEY": "test-key"}):
+            with patch.object(
+                legolist, "rebrickable_get", side_effect=fake_rebrickable_get
+            ):
+                _, parts = legolist.fetch_set_inventory("10312-1")
+
+        by_num = {part["part_num"]: part for part in parts}
+        self.assertEqual(sorted(by_num), ["3001", "fig-000123"])
+        minifig = by_num["fig-000123"]
+        self.assertEqual(minifig["item_type"], "minifig")
+        self.assertEqual(minifig["color_id"], 0)
+        self.assertEqual(minifig["color_name"], "Figurine")
+        self.assertEqual(minifig["part_name"], "Figurine Harry Potter")
+        self.assertEqual(minifig["quantity"], 1)
+        self.assertEqual(minifig["image_url"], "https://example.test/fig.jpg")
+        self.assertEqual(by_num["3001"]["item_type"], "part")
+        self.assertEqual(by_num["3001"]["quantity"], 2)
+
+    def test_fetch_set_inventory_survives_minifig_failure(self):
+        def fake_rebrickable_get(path):
+            if "/minifigs/" in path:
+                raise RuntimeError("API indisponible")
+            return {
+                "results": [
+                    {
+                        "part": {"part_num": "3001", "name": "Brique 2 x 4"},
+                        "color": {"id": 4, "name": "Rouge"},
+                        "quantity": 2,
+                    }
+                ],
+                "next": None,
+            }
+
+        with patch.dict("os.environ", {"REBRICKABLE_API_KEY": "test-key"}):
+            with patch.object(
+                legolist, "rebrickable_get", side_effect=fake_rebrickable_get
+            ):
+                _, parts = legolist.fetch_set_inventory("10312-1")
+
+        self.assertEqual(
+            [(part["part_num"], part["item_type"]) for part in parts],
+            [("3001", "part")],
+        )
+
+    def test_refresh_inventory_replaces_parts_and_preserves_missing(self):
+        set_id = self.add_set_and_part()
+        with legolist.database() as connection:
+            connection.execute(
+                """
+                INSERT INTO set_parts
+                    (set_id, part_num, part_name, color_id, color_name, quantity, missing_quantity, image_url)
+                VALUES (?, '3004sp', 'Pièce de rechange', 4, 'Rouge', 1, 1, '')
+                """,
+                (set_id,),
+            )
+            connection.execute(
+                "UPDATE set_parts SET missing_quantity = 2 WHERE set_id = ? AND part_num = '3001'",
+                (set_id,),
+            )
+
+        def fake_rebrickable_get(path):
+            if "/minifigs/" in path:
+                return {
+                    "results": [
+                        {
+                            "set_num": "fig-000123",
+                            "set_name": "Figurine Harry Potter",
+                            "quantity": 1,
+                            "set_img_url": "https://example.test/fig.jpg",
+                        }
+                    ],
+                    "next": None,
+                }
+            return {
+                "results": [
+                    {
+                        "part": {"part_num": "3001", "name": "Brique 2 x 4"},
+                        "color": {"id": 4, "name": "Rouge"},
+                        "quantity": 3,
+                    },
+                    {
+                        "part": {"part_num": "3002", "name": "Brique 1 x 3"},
+                        "color": {"id": 4, "name": "Rouge"},
+                        "quantity": 1,
+                    },
+                ],
+                "next": None,
+            }
+
+        with patch.dict("os.environ", {"REBRICKABLE_API_KEY": "test-key"}):
+            with patch.object(
+                legolist, "rebrickable_get", side_effect=fake_rebrickable_get
+            ):
+                response = self.client.post(
+                    f"/sets/{set_id}/refresh-inventory",
+                    data={"return_to": "pieces"},
+                )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertIn("/pieces", response.location)
+        with legolist.database() as connection:
+            rows = connection.execute(
+                """
+                SELECT part_num, item_type, quantity, missing_quantity
+                FROM set_parts WHERE set_id = ? ORDER BY part_num
+                """,
+                (set_id,),
+            ).fetchall()
+        self.assertEqual(
+            [
+                (
+                    row["part_num"],
+                    row["item_type"],
+                    row["quantity"],
+                    row["missing_quantity"],
+                )
+                for row in rows
+            ],
+            [
+                ("3001", "part", 3, 2),
+                ("3002", "part", 1, 1),
+                ("fig-000123", "minifig", 1, 1),
+            ],
+        )
+        # 3001 : missing préservé (min(2, 3)) ; 3002 : borné à la quantité (min(9, 1)) ;
+        # la pièce de rechange 3004sp a disparu ; la figurine arrive avec missing = quantity.
+        with legolist.database() as connection:
+            connection.execute(
+                "UPDATE set_parts SET missing_quantity = 9 WHERE set_id = ? AND part_num = '3002'",
+                (set_id,),
+            )
+        with patch.dict("os.environ", {"REBRICKABLE_API_KEY": "test-key"}):
+            with patch.object(
+                legolist, "rebrickable_get", side_effect=fake_rebrickable_get
+            ):
+                self.client.post(f"/sets/{set_id}/refresh-inventory")
+        with legolist.database() as connection:
+            row = connection.execute(
+                "SELECT missing_quantity FROM set_parts WHERE set_id = ? AND part_num = '3002'",
+                (set_id,),
+            ).fetchone()
+        self.assertEqual(row["missing_quantity"], 1)
+
+    def test_exports_exclude_minifigs(self):
+        set_id = self.add_set_and_part()
+        with legolist.database() as connection:
+            connection.execute(
+                """
+                INSERT INTO set_parts
+                    (set_id, part_num, part_name, color_id, color_name, quantity, missing_quantity, image_url, item_type)
+                VALUES (?, 'fig-000123', 'Figurine Harry Potter', 0, 'Figurine', 1, 1, '', 'minifig')
+                """,
+                (set_id,),
+            )
+        bricklink = ET.fromstring(self.client.get("/export/bricklink.xml").data)
+        item_ids = [item.find("ITEMID").text for item in bricklink.findall("ITEM")]
+        self.assertEqual(item_ids, ["3001"])
+        brickowl = list(
+            csv.reader(io.StringIO(self.client.get("/export/brickowl.csv").data.decode("utf-8")))
+        )
+        self.assertEqual(brickowl, [["ItemNo", "Color", "Qty"], ["3001", "4", "3"]])
+
+    def test_pieces_page_displays_minifig(self):
+        set_id = self.add_set_and_part()
+        with legolist.database() as connection:
+            connection.execute(
+                """
+                INSERT INTO set_parts
+                    (set_id, part_num, part_name, color_id, color_name, quantity, missing_quantity, image_url, item_type)
+                VALUES (?, 'fig-000123', 'Figurine Harry Potter', 0, 'Figurine', 1, 1, '', 'minifig')
+                """,
+                (set_id,),
+            )
+        page = self.client.get("/pieces")
+        self.assertEqual(page.status_code, 200)
+        self.assertIn(b"Figurine Harry Potter", page.data)
+        self.assertIn(b"swatch-figurine", page.data)
+
+    def test_refresh_inventory_with_empty_import_keeps_existing_parts(self):
+        set_id = self.add_set_and_part()
+        with legolist.database() as connection:
+            connection.execute(
+                "UPDATE set_parts SET missing_quantity = 2 WHERE set_id = ? AND part_num = '3001'",
+                (set_id,),
+            )
+
+        with patch.dict("os.environ", {"REBRICKABLE_API_KEY": "test-key"}):
+            with patch.object(
+                legolist,
+                "fetch_set_inventory",
+                return_value=({"name": "Set de test"}, []),
+            ):
+                with patch.object(
+                    legolist, "fetch_minifig_parts_for_set", return_value=[]
+                ):
+                    response = self.client.post(f"/sets/{set_id}/refresh-inventory")
+
+        self.assertEqual(response.status_code, 302)
+        with self.client.session_transaction() as browser_session:
+            flashes = [message for _, message in browser_session.get("_flashes", [])]
+        self.assertIn(
+            "Inventaire introuvable : aucune pièce n'a été renvoyée par Rebrickable.",
+            flashes,
+        )
+        with legolist.database() as connection:
+            rows = connection.execute(
+                """
+                SELECT part_num, quantity, missing_quantity
+                FROM set_parts WHERE set_id = ?
+                """,
+                (set_id,),
+            ).fetchall()
+        self.assertEqual(
+            [(row["part_num"], row["quantity"], row["missing_quantity"]) for row in rows],
+            [("3001", 3, 2)],
+        )
+
+    def test_fetch_minifig_parts_ignores_spares_and_aggregates(self):
+        def fake_rebrickable_get(path):
+            if "minifigs/fig-000123/parts/" in path:
+                return {
+                    "results": [
+                        {
+                            "part": {
+                                "part_num": "3001",
+                                "name": "Brique 2 x 4",
+                                "part_img_url": "https://example.test/3001.png",
+                            },
+                            "color": {"id": 4, "name": "Rouge"},
+                            "quantity": 2,
+                            "is_spare": False,
+                        },
+                        {
+                            "part": {
+                                "part_num": "3001",
+                                "name": "Brique 2 x 4",
+                                "part_img_url": "https://example.test/3001.png",
+                            },
+                            "color": {"id": 4, "name": "Rouge"},
+                            "quantity": 1,
+                            "is_spare": True,
+                        },
+                    ],
+                    "next": None,
+                }
+            if "minifigs/fig-000456/parts/" in path:
+                return {
+                    "results": [
+                        {
+                            "part": {
+                                "part_num": "3004",
+                                "name": "Plaque 1 x 2",
+                                "part_img_url": "",
+                            },
+                            "color": {"id": 0, "name": "Black"},
+                            "quantity": 1,
+                        }
+                    ],
+                    "next": None,
+                }
+            return {
+                "results": [
+                    {"set_num": "fig-000123", "quantity": 2},
+                    {"set_num": "fig-000456", "quantity": 1},
+                    {"set_num": "10312-1", "quantity": 1},
+                ],
+                "next": None,
+            }
+
+        with patch.object(legolist, "rebrickable_get", side_effect=fake_rebrickable_get):
+            rows = legolist.fetch_minifig_parts_for_set("10312-1")
+
+        self.assertEqual(len(rows), 2)
+        for row in rows:
+            self.assertEqual(
+                set(row),
+                {
+                    "fig_num",
+                    "part_num",
+                    "part_name",
+                    "color_id",
+                    "color_name",
+                    "quantity",
+                    "image_url",
+                },
+            )
+        by_key = {(row["fig_num"], row["part_num"]): row for row in rows}
+        self.assertEqual(
+            (by_key[("fig-000123", "3001")]["quantity"], by_key[("fig-000123", "3001")]["color_id"]),
+            (3, 4),
+        )
+        self.assertEqual(
+            by_key[("fig-000456", "3004")]["color_id"],
+            0,
+        )
+        self.assertEqual(by_key[("fig-000456", "3004")]["color_name"], "Black")
+        self.assertNotIn(("10312-1", "3001"), by_key)
+        self.assertTrue(all(row["fig_num"].startswith("fig-") for row in rows))
+
+    def test_fetch_minifig_parts_survives_minifig_failure(self):
+        def fake_rebrickable_get(path):
+            if "minifigs/fig-000123/parts/" in path:
+                raise RuntimeError("boom")
+            if "minifigs/fig-000456/parts/" in path:
+                return {
+                    "results": [
+                        {
+                            "part": {
+                                "part_num": "3004",
+                                "name": "Plaque 1 x 2",
+                                "part_img_url": "",
+                            },
+                            "color": {"id": 0, "name": "Black"},
+                            "quantity": 1,
+                        }
+                    ],
+                    "next": None,
+                }
+            return {
+                "results": [
+                    {"set_num": "fig-000123", "quantity": 1},
+                    {"set_num": "fig-000456", "quantity": 1},
+                ],
+                "next": None,
+            }
+
+        with patch.object(legolist, "rebrickable_get", side_effect=fake_rebrickable_get):
+            rows = legolist.fetch_minifig_parts_for_set("10312-1")
+
+        self.assertEqual(
+            [(row["fig_num"], row["part_num"], row["quantity"]) for row in rows],
+            [("fig-000456", "3004", 1)],
+        )
+
+        def failing_list(path):
+            raise RuntimeError("liste indisponible")
+
+        with patch.object(legolist, "rebrickable_get", side_effect=failing_list):
+            with self.assertRaises(RuntimeError):
+                legolist.fetch_minifig_parts_for_set("10312-1")
+
+    def test_add_set_persists_minifig_parts(self):
+        imported_parts = [
+            {
+                "part_num": "3001",
+                "part_name": "Brique 2 x 4",
+                "color_id": 4,
+                "color_name": "Rouge",
+                "quantity": 3,
+                "image_url": "",
+            }
+        ]
+        minifig_rows = [
+            {
+                "fig_num": "fig-000123",
+                "part_num": "3001",
+                "part_name": "Brique 2 x 4",
+                "color_id": 4,
+                "color_name": "Rouge",
+                "quantity": 2,
+                "image_url": "https://example.test/3001.png",
+            }
+        ]
+        with patch.dict("os.environ", {"REBRICKABLE_API_KEY": "test-key"}):
+            with patch.object(
+                legolist,
+                "fetch_set_inventory",
+                return_value=({"name": "Set importé", "theme_id": None, "set_img_url": "", "year": 2020}, imported_parts),
+            ):
+                with patch.object(
+                    legolist,
+                    "fetch_minifig_parts_for_set",
+                    return_value=minifig_rows,
+                ):
+                    response = self.client.post(
+                        "/sets",
+                        data={"set_num": "10312", "return_to": "pieces"},
+                    )
+
+        self.assertEqual(response.status_code, 302)
+        with legolist.database() as connection:
+            set_id = connection.execute("SELECT id FROM sets").fetchone()["id"]
+            minifig_rows_saved = connection.execute(
+                """
+                SELECT set_id, fig_num, part_num, quantity, image_url
+                FROM minifig_parts
+                """
+            ).fetchall()
+            fig_part_count = connection.execute(
+                "SELECT COUNT(*) AS count FROM set_parts WHERE part_num LIKE 'fig-%'"
+            ).fetchone()["count"]
+        self.assertEqual(
+            [(row["set_id"], row["fig_num"], row["part_num"], row["quantity"], row["image_url"]) for row in minifig_rows_saved],
+            [(set_id, "fig-000123", "3001", 2, "https://example.test/3001.png")],
+        )
+        self.assertEqual(fig_part_count, 0)
+
+    def test_minifig_parts_fetch_failure_does_not_block_add_set(self):
+        imported_parts = [
+            {
+                "part_num": "3001",
+                "part_name": "Brique 2 x 4",
+                "color_id": 4,
+                "color_name": "Rouge",
+                "quantity": 3,
+                "image_url": "",
+            }
+        ]
+        with patch.dict("os.environ", {"REBRICKABLE_API_KEY": "test-key"}):
+            with patch.object(
+                legolist,
+                "fetch_set_inventory",
+                return_value=({"name": "Set importé", "theme_id": None, "set_img_url": "", "year": 2020}, imported_parts),
+            ):
+                with patch.object(
+                    legolist,
+                    "fetch_minifig_parts_for_set",
+                    side_effect=RuntimeError("api down"),
+                ):
+                    response = self.client.post(
+                        "/sets",
+                        data={"set_num": "10312", "return_to": "pieces"},
+                    )
+
+        self.assertEqual(response.status_code, 302)
+        with legolist.database() as connection:
+            set_count = connection.execute("SELECT COUNT(*) AS count FROM sets").fetchone()["count"]
+            parts = connection.execute(
+                "SELECT part_num, quantity FROM set_parts"
+            ).fetchall()
+            minifig_count = connection.execute(
+                "SELECT COUNT(*) AS count FROM minifig_parts"
+            ).fetchone()["count"]
+        self.assertEqual(set_count, 1)
+        self.assertEqual(
+            [(row["part_num"], row["quantity"]) for row in parts],
+            [("3001", 3)],
+        )
+        self.assertEqual(minifig_count, 0)
+
+    def test_refresh_inventory_replaces_minifig_parts(self):
+        set_id = self.add_set_and_part()
+        with legolist.database() as connection:
+            connection.execute(
+                """
+                INSERT INTO minifig_parts
+                    (set_id, fig_num, part_num, part_name, color_id, color_name, quantity, image_url)
+                VALUES (?, 'fig-OLD', '3024', 'Ancienne brique', 4, 'Rouge', 1, '')
+                """,
+                (set_id,),
+            )
+
+        replacement_parts = [
+            {
+                "part_num": "3001",
+                "part_name": "Brique 2 x 4",
+                "color_id": 4,
+                "color_name": "Rouge",
+                "quantity": 3,
+                "image_url": "",
+            }
+        ]
+        replacement_minifigs = [
+            {
+                "fig_num": "fig-NEW",
+                "part_num": "3004",
+                "part_name": "Plaque 1 x 2",
+                "color_id": 0,
+                "color_name": "Black",
+                "quantity": 2,
+                "image_url": "",
+            }
+        ]
+        with patch.dict("os.environ", {"REBRICKABLE_API_KEY": "test-key"}):
+            with patch.object(
+                legolist,
+                "fetch_set_inventory",
+                return_value=({"name": "Set de test"}, replacement_parts),
+            ):
+                with patch.object(
+                    legolist,
+                    "fetch_minifig_parts_for_set",
+                    return_value=replacement_minifigs,
+                ):
+                    response = self.client.post(
+                        f"/sets/{set_id}/refresh-inventory",
+                        data={"return_to": "pieces"},
+                    )
+
+        self.assertEqual(response.status_code, 302)
+        with legolist.database() as connection:
+            rows = connection.execute(
+                "SELECT fig_num, part_num, quantity FROM minifig_parts WHERE set_id = ?",
+                (set_id,),
+            ).fetchall()
+        self.assertEqual(
+            [(row["fig_num"], row["part_num"], row["quantity"]) for row in rows],
+            [("fig-NEW", "3004", 2)],
+        )
+
+    def test_refresh_inventory_keeps_minifig_parts_when_fetch_fails(self):
+        set_id = self.add_set_and_part()
+        with legolist.database() as connection:
+            connection.execute(
+                """
+                INSERT INTO minifig_parts
+                    (set_id, fig_num, part_num, part_name, color_id, color_name, quantity, image_url)
+                VALUES (?, 'fig-000123', '3001', 'Brique 2 x 4', 4, 'Rouge', 2, '')
+                """,
+                (set_id,),
+            )
+
+        replacement_parts = [
+            {
+                "part_num": "3001",
+                "part_name": "Brique 2 x 4",
+                "color_id": 4,
+                "color_name": "Rouge",
+                "quantity": 5,
+                "image_url": "",
+            }
+        ]
+        with patch.dict("os.environ", {"REBRICKABLE_API_KEY": "test-key"}):
+            with patch.object(
+                legolist,
+                "fetch_set_inventory",
+                return_value=({"name": "Set de test"}, replacement_parts),
+            ):
+                with patch.object(
+                    legolist,
+                    "fetch_minifig_parts_for_set",
+                    side_effect=RuntimeError("api down"),
+                ):
+                    response = self.client.post(
+                        f"/sets/{set_id}/refresh-inventory",
+                        data={"return_to": "pieces"},
+                    )
+
+        self.assertEqual(response.status_code, 302)
+        with legolist.database() as connection:
+            minifig_rows = connection.execute(
+                "SELECT fig_num, part_num, quantity FROM minifig_parts WHERE set_id = ?",
+                (set_id,),
+            ).fetchall()
+            part_rows = connection.execute(
+                "SELECT part_num, quantity FROM set_parts WHERE set_id = ?",
+                (set_id,),
+            ).fetchall()
+        self.assertEqual(
+            [(row["fig_num"], row["part_num"], row["quantity"]) for row in minifig_rows],
+            [("fig-000123", "3001", 2)],
+        )
+        self.assertEqual(
+            [(row["part_num"], row["quantity"]) for row in part_rows],
+            [("3001", 5)],
+        )
+
+    def test_duplicate_set_copies_minifig_parts(self):
+        set_id = self.add_set_and_part()
+        with legolist.database() as connection:
+            connection.execute(
+                """
+                INSERT INTO minifig_parts
+                    (set_id, fig_num, part_num, part_name, color_id, color_name, quantity, image_url)
+                VALUES (?, 'fig-000123', '3001', 'Brique 2 x 4', 4, 'Rouge', 2, '')
+                """,
+                (set_id,),
+            )
+
+        response = self.client.post(
+            f"/sets/{set_id}/duplicate",
+            data={"return_to": "pieces"},
+        )
+        self.assertEqual(response.status_code, 302)
+
+        with legolist.database() as connection:
+            set_ids = [row["id"] for row in connection.execute("SELECT id FROM sets ORDER BY id")]
+            rows = connection.execute(
+                """
+                SELECT set_id, fig_num, part_num, quantity, missing_quantity
+                FROM minifig_parts ORDER BY set_id
+                """
+            ).fetchall()
+
+        self.assertEqual(len(set_ids), 2)
+        self.assertEqual(
+            [
+                (
+                    row["set_id"],
+                    row["fig_num"],
+                    row["part_num"],
+                    row["quantity"],
+                    row["missing_quantity"],
+                )
+                for row in rows
+            ],
+            [
+                (set_id, "fig-000123", "3001", 2, 0),
+                (set_ids[1], "fig-000123", "3001", 2, 2),
+            ],
+        )
+        self.assertNotEqual(set_id, set_ids[1])
+
+    def test_minifig_parts_render_on_pieces_page_and_stay_hidden_without_data(self):
+        set_id = self.add_set_and_part()
+        with legolist.database() as connection:
+            connection.execute(
+                """
+                INSERT INTO set_parts
+                    (set_id, part_num, part_name, color_id, color_name, quantity, missing_quantity, image_url, item_type)
+                VALUES (?, 'fig-000123', 'Figurine Harry Potter', 0, 'Figurine', 1, 1, '', 'minifig')
+                """,
+                (set_id,),
+            )
+            connection.execute(
+                """
+                INSERT INTO minifig_parts
+                    (set_id, fig_num, part_num, part_name, color_id, color_name, quantity, image_url)
+                VALUES (?, 'fig-000123', '3001', 'Brique', 4, 'Rouge', 2, '')
+                """,
+                (set_id,),
+            )
+
+        page = self.client.get("/pieces")
+        self.assertEqual(page.status_code, 200)
+        self.assertIn(b'class="minifig-parts"', page.data)
+        self.assertIn(b"minifig-parts-label", page.data)
+        self.assertIn(b">Brique<", page.data)
+        self.assertIn(b">/2</span>", page.data)
+        # La pièce normale (quantity 3) conserve son total : ×3.
+        self.assertIn(b"\xc3\x973", page.data)
+
+        with legolist.database() as connection:
+            connection.execute("DELETE FROM minifig_parts WHERE set_id = ?", (set_id,))
+        page = self.client.get("/pieces")
+        self.assertEqual(page.status_code, 200)
+        self.assertNotIn(b'class="minifig-parts"', page.data)
+        self.assertNotIn(b"\xc3\x972", page.data)
+        self.assertIn(b"\xc3\x973", page.data)
+
+    def test_delete_set_removes_minifig_parts(self):
+        set_id = self.add_set_and_part()
+        with legolist.database() as connection:
+            connection.execute(
+                """
+                INSERT INTO minifig_parts
+                    (set_id, fig_num, part_num, part_name, color_id, color_name, quantity, image_url)
+                VALUES (?, 'fig-000123', '3001', 'Brique 2 x 4', 4, 'Rouge', 2, '')
+                """,
+                (set_id,),
+            )
+
+        response = self.client.post(f"/sets/{set_id}/delete")
+
+        self.assertEqual(response.status_code, 302)
+        with legolist.database() as connection:
+            remaining_sets = connection.execute("SELECT COUNT(*) AS count FROM sets").fetchone()["count"]
+            remaining_parts = connection.execute(
+                "SELECT COUNT(*) AS count FROM minifig_parts"
+            ).fetchone()["count"]
+        self.assertEqual(remaining_sets, 0)
+        self.assertEqual(remaining_parts, 0)
+
+
+    def add_stock_part(
+        self,
+        part_num,
+        color_id=4,
+        quantity=1,
+        part_name=None,
+        color_name="Rouge",
+        image_url="",
+        item_type="part",
+    ):
+        response = self.client.post(
+            "/stock",
+            data={
+                "part_num": part_num,
+                "part_name": part_name or f"Pièce {part_num}",
+                "color_id": str(color_id),
+                "color_name": color_name,
+                "quantity": str(quantity),
+                "image_url": image_url,
+                "item_type": item_type,
+            },
+        )
+        self.assertEqual(response.status_code, 302)
+        with legolist.database() as connection:
+            row = connection.execute(
+                """
+                SELECT id, part_num, color_id, quantity FROM stock_parts
+                WHERE part_num = ? AND color_id = ?
+                """,
+                (part_num, color_id),
+            ).fetchone()
+        self.assertIsNotNone(row)
+        return row
+
+    def create_gathering_set(self, set_num="31145"):
+        response = self.client.post(
+            "/sets",
+            data={"set_num": set_num, "title": f"Set {set_num}"},
+        )
+        self.assertEqual(response.status_code, 302)
+        with legolist.database() as connection:
+            row = connection.execute(
+                "SELECT id, set_num FROM sets WHERE set_num = ?",
+                (f"{set_num}-1",),
+            ).fetchone()
+        self.assertIsNotNone(row)
+        return row["id"]
+
+    def create_collected_set(self, set_num="75192"):
+        response = self.client.post(
+            "/sets",
+            data={"set_num": set_num, "return_to": "sets"},
+        )
+        self.assertEqual(response.status_code, 302)
+        with legolist.database() as connection:
+            row = connection.execute(
+                "SELECT id, set_num, in_collection FROM sets WHERE set_num = ?",
+                (f"{set_num}-1",),
+            ).fetchone()
+        self.assertIsNotNone(row)
+        self.assertEqual(row["in_collection"], 1)
+        return row["id"]
+
+    def insert_set_part(
+        self,
+        set_id,
+        part_num,
+        color_id=4,
+        quantity=1,
+        missing_quantity=None,
+        part_name=None,
+        color_name="Rouge",
+    ):
+        if missing_quantity is None:
+            missing_quantity = quantity
+        with legolist.database() as connection:
+            connection.execute(
+                """
+                INSERT INTO set_parts
+                    (set_id, part_num, part_name, color_id, color_name,
+                     quantity, missing_quantity, image_url, item_type)
+                VALUES (?, ?, ?, ?, ?, ?, ?, '', 'part')
+                """,
+                (
+                    set_id,
+                    part_num,
+                    part_name or f"Pièce {part_num}",
+                    color_id,
+                    color_name,
+                    quantity,
+                    missing_quantity,
+                ),
+            )
+
+    def test_stock_parts_can_be_added_incremented_and_deleted(self):
+        row = self.add_stock_part("3001", color_id=4, quantity=5, part_name="Brique 2 x 4")
+        self.assertEqual(row["quantity"], 5)
+
+        # Un nouvel ajout de la même référence/couleur incrémente la quantité.
+        response = self.client.post(
+            "/stock",
+            data={
+                "part_num": "3001",
+                "part_name": "Brique 2 x 4",
+                "color_id": "4",
+                "color_name": "Rouge",
+                "quantity": "3",
+            },
+            follow_redirects=True,
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("3 × Brique 2 x 4 ajouté(s) au vrac.".encode("utf-8"), response.data)
+        with legolist.database() as connection:
+            stored = connection.execute(
+                "SELECT quantity FROM stock_parts WHERE id = ?", (row["id"],)
+            ).fetchone()
+        self.assertEqual(stored["quantity"], 8)
+
+        # Ajustement relatif.
+        response = self.client.post(
+            f"/stock/{row['id']}/adjust",
+            data={"change": "-2"},
+            follow_redirects=True,
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("Brique 2 x 4 : 6 dans le vrac.".encode("utf-8"), response.data)
+        with legolist.database() as connection:
+            stored = connection.execute(
+                "SELECT quantity FROM stock_parts WHERE id = ?", (row["id"],)
+            ).fetchone()
+        self.assertEqual(stored["quantity"], 6)
+
+        # Ajustement absolu.
+        response = self.client.post(
+            f"/stock/{row['id']}/adjust",
+            data={"quantity": "1"},
+            follow_redirects=True,
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("Brique 2 x 4 : 1 dans le vrac.".encode("utf-8"), response.data)
+
+        # Une quantité ramenée à zéro supprime l'entrée du vrac.
+        response = self.client.post(
+            f"/stock/{row['id']}/adjust",
+            data={"change": "-1"},
+            follow_redirects=True,
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("Brique 2 x 4 retiré du vrac.".encode("utf-8"), response.data)
+        with legolist.database() as connection:
+            gone = connection.execute(
+                "SELECT id FROM stock_parts WHERE id = ?", (row["id"],)
+            ).fetchone()
+        self.assertIsNone(gone)
+
+        # Suppression explicite via la route dédiée.
+        row = self.add_stock_part("3001", color_id=4, quantity=2, part_name="Brique 2 x 4")
+        response = self.client.post(
+            f"/stock/{row['id']}/delete",
+            follow_redirects=True,
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("Brique 2 x 4 retiré du vrac.".encode("utf-8"), response.data)
+        with legolist.database() as connection:
+            gone = connection.execute(
+                "SELECT id FROM stock_parts WHERE id = ?", (row["id"],)
+            ).fetchone()
+        self.assertIsNone(gone)
+
+    def test_inventory_separates_stock_sets_and_reserved(self):
+        self.add_stock_part("3001", color_id=4, quantity=3)
+        collected_id = self.create_collected_set("75192")
+        self.insert_set_part(
+            collected_id, "3001", color_id=4, quantity=4, missing_quantity=2
+        )
+        gathering_id = self.create_gathering_set("31145")
+        self.insert_set_part(
+            gathering_id, "3001", color_id=4, quantity=5, missing_quantity=3
+        )
+
+        with legolist.database() as connection:
+            owned = legolist.get_owned_parts(connection)
+        part = owned[("3001", 4)]
+        self.assertEqual(part["stock_qty"], 3)
+        self.assertEqual(part["set_qty"], 2)
+        self.assertEqual(part["reserved_qty"], 2)
+        self.assertEqual(part["total"], 7)
+        self.assertEqual(part["origin"], "mixed")
+
+        page = self.client.get("/inventaire")
+        self.assertEqual(page.status_code, 200)
+        self.assertIn(
+            b'data-part="3001" data-color="4" data-total="7" data-stock="3" '
+            b'data-sets="2" data-reserved="2" data-origin="mixed"',
+            page.data,
+        )
+        # Les badges ont disparu au profit des lignes d'allocation.
+        self.assertNotIn(b"part-badge", page.data)
+        self.assertIn(b'class="alloc-row alloc-sets"', page.data)
+        self.assertIn(b'class="alloc-row alloc-reserved"', page.data)
+
+        self.add_stock_part("3002", color_id=4, quantity=1)
+        self.insert_set_part(collected_id, "3003", color_id=4, quantity=2, missing_quantity=0)
+        self.insert_set_part(gathering_id, "3004", color_id=4, quantity=2, missing_quantity=1)
+        page = self.client.get("/inventaire")
+        self.assertIn(b'class="stock-stepper"', page.data)
+        self.assertIn(b'data-part="3004" data-color="4" data-total="1"', page.data)
+        self.assertNotIn(b"part-badge", page.data)
+
+    def test_pieces_page_offers_stock_for_missing_part(self):
+        self.add_stock_part("3001", color_id=4, quantity=3)
+        gathering_id = self.create_gathering_set("75192")
+        self.insert_set_part(gathering_id, "3001", color_id=4, quantity=2, missing_quantity=2)
+        page = self.client.get("/pieces")
+        self.assertIn(b"Prendre dans le vrac", page.data)
+        self.assertIn("suffisant".encode(), page.data)
+
+        result = self.client.post(
+            "/pieces/take-stock",
+            data={"part_num": "3001", "color_id": "4"},
+            headers={"X-Requested-With": "XMLHttpRequest"},
+        )
+        self.assertEqual(result.status_code, 200)
+        self.assertEqual(result.get_json()["taken"], 2)
+        self.assertEqual(result.get_json()["stock_qty"], 1)
+
+    def test_inventory_origin_filter(self):
+        self.add_stock_part("3001", color_id=4, quantity=3)
+        collected_id = self.create_collected_set("75192")
+        self.insert_set_part(collected_id, "3002", color_id=4, quantity=4, missing_quantity=2)
+        gathering_id = self.create_gathering_set("31145")
+        self.insert_set_part(gathering_id, "3003", color_id=4, quantity=5, missing_quantity=3)
+        self.add_stock_part("3004", color_id=4, quantity=2)
+        self.insert_set_part(collected_id, "3004", color_id=4, quantity=1, missing_quantity=0)
+
+        page = self.client.get("/inventaire?origin=stock")
+        self.assertIn(b'data-part="3001"', page.data)
+        self.assertIn(b'data-part="3004"', page.data)
+        self.assertNotIn(b'data-part="3002"', page.data)
+        self.assertNotIn(b'data-part="3003"', page.data)
+
+        page = self.client.get("/inventaire?origin=sets")
+        self.assertIn(b'data-part="3002"', page.data)
+        self.assertIn(b'data-part="3004"', page.data)
+        self.assertNotIn(b'data-part="3001"', page.data)
+        self.assertNotIn(b'data-part="3003"', page.data)
+
+        page = self.client.get("/inventaire?origin=reserved")
+        self.assertIn(b'data-part="3003"', page.data)
+        self.assertNotIn(b'data-part="3001"', page.data)
+        self.assertNotIn(b'data-part="3002"', page.data)
+        self.assertNotIn(b'data-part="3004"', page.data)
+
+        page = self.client.get("/inventaire?origin=mixed")
+        self.assertIn(b'data-part="3004"', page.data)
+        self.assertNotIn(b'data-part="3001"', page.data)
+        self.assertNotIn(b'data-part="3002"', page.data)
+        self.assertNotIn(b'data-part="3003"', page.data)
+
+        # Une origine inconnue retombe sur « tout ».
+        page = self.client.get("/inventaire?origin=absurde")
+        self.assertIn(b'data-part="3001"', page.data)
+        self.assertIn(b'data-part="3002"', page.data)
+        self.assertIn(b'data-part="3003"', page.data)
+        self.assertIn(b'data-part="3004"', page.data)
+
+    def test_take_stock_transfers_from_stock_without_changing_total(self):
+        set_id = self.create_gathering_set("31145")
+        self.insert_set_part(
+            set_id, "3001", color_id=4, quantity=5, missing_quantity=5
+        )
+        self.add_stock_part("3001", color_id=4, quantity=5)
+
+        # Prise complète : le vrac est vidé et le total possédé ne change pas.
+        response = self.client.post(
+            f"/sets/{set_id}/take-stock", follow_redirects=True
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("5 pièces prises dans le vrac.".encode("utf-8"), response.data)
+        with legolist.database() as connection:
+            stock_row = connection.execute(
+                "SELECT quantity FROM stock_parts WHERE part_num = '3001'"
+            ).fetchone()
+            part_row = connection.execute(
+                """
+                SELECT missing_quantity FROM set_parts
+                WHERE set_id = ? AND part_num = '3001'
+                """,
+                (set_id,),
+            ).fetchone()
+            owned = legolist.get_owned_parts(connection)
+        self.assertIsNone(stock_row)
+        self.assertEqual(part_row["missing_quantity"], 0)
+        part = owned[("3001", 4)]
+        self.assertEqual(part["total"], 5)
+        self.assertEqual(part["stock_qty"], 0)
+        self.assertEqual(part["reserved_qty"], 5)
+
+        # Prise partielle depuis la page des sets à réunir.
+        self.add_stock_part("3001", color_id=4, quantity=5)
+        with legolist.database() as connection:
+            connection.execute(
+                "UPDATE set_parts SET missing_quantity = 2 WHERE set_id = ?", (set_id,)
+            )
+        page = self.client.get("/pieces")
+        self.assertNotIn("Prendre le vrac · 5".encode("utf-8"), page.data)
+        self.assertIn(b'class="stock-take-form" action="/pieces/take-stock"', page.data)
+        self.assertIn("Prendre dans le vrac".encode("utf-8"), page.data)
+        response = self.client.post(
+            f"/sets/{set_id}/take-stock", data={"return_to": "pieces"}
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertIn("/pieces", response.location)
+        page = self.client.get("/pieces")
+        self.assertIn("2 pièces prises dans le vrac.".encode("utf-8"), page.data)
+        with legolist.database() as connection:
+            stock_row = connection.execute(
+                "SELECT quantity FROM stock_parts WHERE part_num = '3001'"
+            ).fetchone()
+            part_row = connection.execute(
+                """
+                SELECT missing_quantity FROM set_parts
+                WHERE set_id = ? AND part_num = '3001'
+                """,
+                (set_id,),
+            ).fetchone()
+        self.assertEqual(stock_row["quantity"], 3)
+        self.assertEqual(part_row["missing_quantity"], 0)
+
+        # Prise unique avec retour vers la page de vérification.
+        with legolist.database() as connection:
+            connection.execute(
+                "UPDATE set_parts SET missing_quantity = 1 WHERE set_id = ?", (set_id,)
+            )
+        response = self.client.post(
+            f"/sets/{set_id}/take-stock", data={"return_to": "verify"}
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertIn("/inventaire/verifier?set_num=31145-1", response.location)
+        page = self.client.get("/inventaire/verifier")
+        self.assertIn("1 pièce prise dans le vrac.".encode("utf-8"), page.data)
+        with legolist.database() as connection:
+            stock_row = connection.execute(
+                "SELECT quantity FROM stock_parts WHERE part_num = '3001'"
+            ).fetchone()
+        self.assertEqual(stock_row["quantity"], 2)
+
+        # Aucune pièce du vrac correspondante : message d'erreur.
+        with legolist.database() as connection:
+            connection.execute("DELETE FROM stock_parts")
+            connection.execute(
+                "UPDATE set_parts SET missing_quantity = 1 WHERE set_id = ?", (set_id,)
+            )
+        response = self.client.post(
+            f"/sets/{set_id}/take-stock", follow_redirects=True
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(
+            "Aucune pièce du vrac ne correspond aux pièces manquantes de ce set.".encode(
+                "utf-8"
+            ),
+            response.data,
+        )
+
+    def test_verify_set_page_without_api_key_shows_configuration_message(self):
+        page = self.client.get("/inventaire/verifier")
+        self.assertEqual(page.status_code, 200)
+        self.assertNotIn(b"verify-result", page.data)
+        self.assertNotIn(b"Configurez REBRICKABLE_API_KEY", page.data)
+
+        page = self.client.get("/inventaire/verifier?set_num=31145")
+        self.assertEqual(page.status_code, 200)
+        self.assertIn(
+            "Configurez REBRICKABLE_API_KEY pour vérifier un set.".encode("utf-8"),
+            page.data,
+        )
+        self.assertIn(b'value="31145-1"', page.data)
+        self.assertNotIn(b"verify-result", page.data)
+
+        page = self.client.get("/inventaire/verifier?set_num=10312/2")
+        self.assertEqual(page.status_code, 200)
+        self.assertIn(
+            "Numéro de set invalide : 10312/2.".encode("utf-8"), page.data
+        )
+
+    def test_verify_set_page_compares_needed_with_owned_parts(self):
+        self.add_stock_part("3001", color_id=4, quantity=4)
+        collected_id = self.create_collected_set("75192")
+        self.insert_set_part(collected_id, "3001", color_id=4, quantity=2, missing_quantity=0)
+        gathering_id = self.create_gathering_set("31145")
+
+        set_info = {
+            "name": "Set de test",
+            "set_img_url": "",
+            "year": 2024,
+            "theme_id": None,
+        }
+        api_parts = [
+            {
+                "part_num": "3001",
+                "part_name": "Brique 2 x 4",
+                "color_id": 4,
+                "color_name": "Rouge",
+                "quantity": 10,
+                "image_url": "",
+                "item_type": "part",
+            },
+            {
+                "part_num": "3002",
+                "part_name": "Plaque 2 x 2",
+                "color_id": 11,
+                "color_name": "Bleu",
+                "quantity": 3,
+                "image_url": "",
+                "item_type": "part",
+            },
+        ]
+
+        with patch.dict(
+            "os.environ", {"REBRICKABLE_API_KEY": "test-key"}
+        ), patch.object(
+            legolist, "fetch_set_inventory", return_value=(set_info, api_parts)
+        ) as fetch_mock:
+            page = self.client.get("/inventaire/verifier?set_num=31145")
+        self.assertEqual(page.status_code, 200)
+        self.assertEqual(fetch_mock.call_count, 1)
+        self.assertEqual(fetch_mock.call_args[0][0], "31145-1")
+
+        # 3001 : besoin 10, vrac 4, sets 2 → prendre 4, acheter 4.
+        self.assertIn(
+            b'data-part="3001" data-color="4" data-stock="4" data-sets="2" data-to-buy="4"',
+            page.data,
+        )
+        # 3002 : besoin 3, rien en vrac ni en set → acheter 3.
+        self.assertIn(
+            b'data-part="3002" data-color="11" data-stock="0" data-sets="0" data-to-buy="3"',
+            page.data,
+        )
+        # Résumé global.
+        self.assertIn("<strong>13</strong><span>à réunir</span>".encode("utf-8"), page.data)
+        self.assertIn(
+            "<strong>4</strong><span>dispo en vrac</span>".encode("utf-8"), page.data
+        )
+        self.assertIn("<strong>2</strong><span>dans un set</span>".encode("utf-8"), page.data)
+        self.assertIn("<strong>7</strong><span>à acheter</span>".encode("utf-8"), page.data)
+        self.assertIn("Set de test".encode("utf-8"), page.data)
+        # Le set existe déjà à réunir : le CTA propose de prendre le vrac.
+        self.assertIn(b'name="return_to" value="verify"', page.data)
+        self.assertIn(f"/sets/{gathering_id}/take-stock".encode("ascii"), page.data)
+
+    def test_inventory_hides_parts_entirely_missing_from_collected_sets(self):
+        collected_id = self.create_collected_set("75192")
+        self.insert_set_part(
+            collected_id, "3001", color_id=4, quantity=4, missing_quantity=4
+        )
+        self.insert_set_part(
+            collected_id, "3002", color_id=4, quantity=4, missing_quantity=2
+        )
+
+        with legolist.database() as connection:
+            owned = legolist.get_owned_parts(connection)
+        # Une pièce absente d'un set possédé ne doit pas apparaître à « ×0 ».
+        self.assertNotIn(("3001", 4), owned)
+        self.assertEqual(owned[("3002", 4)]["total"], 2)
+
+        page = self.client.get("/inventaire")
+        self.assertEqual(page.status_code, 200)
+        self.assertNotIn(b'data-part="3001"', page.data)
+        self.assertIn(b'data-part="3002" data-color="4" data-total="2"', page.data)
+
+    def test_verify_set_counts_reserved_parts_as_owned_in_sets(self):
+        gathering_id = self.create_gathering_set("31145")
+        self.insert_set_part(
+            gathering_id, "3001", color_id=4, quantity=5, missing_quantity=3
+        )
+
+        set_info = {"name": "Set de test", "set_img_url": "", "year": 2024}
+        api_parts = [
+            {
+                "part_num": "3001",
+                "part_name": "Brique 2 x 4",
+                "color_id": 4,
+                "color_name": "Rouge",
+                "quantity": 5,
+                "image_url": "",
+                "item_type": "part",
+            }
+        ]
+        with patch.dict(
+            "os.environ", {"REBRICKABLE_API_KEY": "test-key"}
+        ), patch.object(
+            legolist, "fetch_set_inventory", return_value=(set_info, api_parts)
+        ):
+            page = self.client.get("/inventaire/verifier?set_num=10312")
+        self.assertEqual(page.status_code, 200)
+        # Les 2 pièces réservées au set à réunir comptent comme possédées.
+        self.assertIn(
+            b'data-part="3001" data-color="4" data-stock="0" data-sets="2" data-to-buy="3"',
+            page.data,
+        )
+        self.assertIn(
+            "<strong>2</strong><span>dans un set</span>".encode("utf-8"), page.data
+        )
+
+    def test_add_stock_part_validates_item_type_and_color(self):
+        response = self.client.post(
+            "/stock",
+            data={
+                "part_num": "3001",
+                "color_id": "4",
+                "color_name": "Rouge",
+                "quantity": "2",
+                "item_type": "banana",
+            },
+        )
+        self.assertEqual(response.status_code, 302)
+        with legolist.database() as connection:
+            row = connection.execute(
+                "SELECT item_type FROM stock_parts WHERE part_num = '3001'"
+            ).fetchone()
+        self.assertEqual(row["item_type"], "part")
+
+        response = self.client.post(
+            "/stock",
+            data={"part_num": "3002", "color_id": "rouge", "quantity": "1"},
+            follow_redirects=True,
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(
+            "Couleur invalide pour cette pièce du vrac.".encode("utf-8"),
+            response.data,
+        )
+        with legolist.database() as connection:
+            stored = connection.execute(
+                "SELECT 1 FROM stock_parts WHERE part_num = '3002'"
+            ).fetchone()
+        self.assertIsNone(stored)
 
 
 if __name__ == "__main__":

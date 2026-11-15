@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% import "_minifig_parts.html" as minifig_ui %}
 {% block title %}Pièces à réunir{% endblock %}
 {% block breadcrumb %}PIÈCES À RÉUNIR{% endblock %}
 {% block content %}
@@ -7,7 +8,7 @@
   </section>
 
   <section class="add-set-card" id="ajouter">
-    <div class="add-set-icon">＋</div><div class="add-set-copy"><h2>Préparer un set</h2><p>{% if has_api_key %}La liste de pièces sera importée automatiquement.{% else %}Entre sa référence, puis ajoute les pièces à la main.{% endif %}</p></div>
+    <div class="add-set-icon">＋</div><div class="add-set-copy"><h2>Préparer un set</h2><p>{% if has_api_key %}La liste de pièces sera importée automatiquement.{% else %}Sans clé Rebrickable, ajoute le set dans Mes sets pour saisir ses pièces manuellement, puis active son suivi.{% endif %}</p></div>
     <form class="add-form" action="{{ url_for('add_set') }}" method="post"><label class="sr-only" for="set_num">Référence du set LEGO</label><input id="set_num" name="set_num" placeholder="Ex. 10312 ou 31145-1" required><button class="button button-primary" type="submit">Voir les pièces <span>→</span></button></form>
   </section>
 
@@ -18,20 +19,31 @@
     {% if sets_to_assemble %}
       <div class="set-grid candidate-grid">
         {% for set in sets_to_assemble %}
-          <article class="set-card" data-set-id="{{ set.id }}">
+          <article class="set-card" data-set-id="{{ set.id }}" data-tone="{{ set.id % 6 }}">
             <header class="set-header">
-              <div class="set-avatar">{% if set.set_image_url %}<img src="{{ set.set_image_url|local_image_url }}" alt="Image du set {{ set.set_num }}" loading="lazy">{% else %}{{ set.title[:1]|upper }}{% endif %}</div>
-              <div class="set-title"><h3>{{ set.title }}{% if set.copy_count > 1 %} · exemplaire {{ set.copy_number }}{% endif %}</h3><span>Réf. {{ set.set_num }} · {{ set.total }} pièces{% if set.in_collection %} · Dans Mes sets{% endif %}</span></div>
+              <div class="set-avatar">{% if set.set_image_url %}<img src="{{ set.set_image_url|local_image_url }}" alt="Image du set {{ set.set_num }}" loading="lazy" tabindex="0">{% else %}{{ set.title[:1]|upper }}{% endif %}</div>
+              <div class="set-title"><h3>{{ set.title }}{% if set.copy_count > 1 %} · exemplaire {{ set.copy_number }}{% endif %}</h3><span>Réf. {{ set.set_num }} · {{ set.total }} pièces{% if set.year %} · {{ set.year }}{% endif %}{% if set.theme_name and set.theme_name != 'Thème non renseigné' %} · {{ set.theme_name }}{% endif %}{% if set.in_collection %} · Dans Mes sets{% endif %}</span></div>
               <div class="set-progress"><strong>{{ set.missing }}</strong><span>à réunir</span></div>
               <div class="candidate-actions">
+                {% if has_api_key %}<form action="{{ url_for('refresh_set_inventory', set_id=set.id) }}" method="post"><input type="hidden" name="return_to" value="pieces"><button class="icon-button" type="submit" title="Réimporter l'inventaire du set depuis Rebrickable" aria-label="Actualiser l'inventaire de {{ set.title }}">↻</button></form>{% endif %}
                 <form action="{{ url_for('duplicate_set', set_id=set.id) }}" method="post"><input type="hidden" name="return_to" value="pieces"><button class="icon-button set-copy-button copy-add" type="submit" title="Ajouter un exemplaire" aria-label="Ajouter un exemplaire de {{ set.title }}">+</button></form>
                 <form action="{{ url_for('update_set_gathering', set_id=set.id) }}" method="post"><input type="hidden" name="return_to" value="pieces"><input type="hidden" name="in_gathering" value="0"><button class="icon-button set-list-remove" type="submit" title="Retirer ce set de la recherche" aria-label="Retirer {{ set.title }} de la liste à réunir">×</button></form>
-                <form action="{{ url_for('complete_set_parts', set_id=set.id) }}" method="post"><button class="button button-outline button-small" type="submit" {{ 'disabled' if not set.part_count else '' }}>{{ 'Tout trouvé' if set.missing else 'Tout chercher' }}</button></form>
+                <form action="{{ url_for('complete_set_parts', set_id=set.id) }}" method="post">
+                  <button class="icon-button set-copy-button candidate-complete-button" type="submit" title="{{ 'Tout trouvé' if set.missing else 'Tout chercher' }}" aria-label="{{ 'Marquer toutes les pièces comme trouvées' if set.missing else 'Remettre toutes les pièces à chercher' }}" {{ 'disabled' if not set.part_count else '' }}>
+                    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                      {% if set.missing %}
+                        <path d="m5 12 4 4L19 6"/>
+                      {% else %}
+                        <path d="M20 11a8 8 0 1 1-2.34-5.66L20 8"/>
+                        <path d="M20 4v4h-4"/>
+                      {% endif %}
+                    </svg>
+                  </button>
+                </form>
                 {% if not set.in_collection %}<form action="{{ url_for('collect_set', set_id=set.id) }}" method="post"><button class="button button-primary button-small" type="submit">J'ai ce set</button></form>{% endif %}
               </div>
             </header>
-            {% if not set.part_count %}<div class="empty-parts"><span>🧩</span><div><strong>Pas encore de pièces enregistrées</strong><small>Ajoute son inventaire avant de le valider.</small></div></div>{% endif %}
-            {% with return_to='pieces' %}{% include '_manual_add.html' %}{% endwith %}
+            {% if not set.part_count %}<div class="empty-parts"><span>🧩</span><div><strong>Pas encore de pièces enregistrées</strong><small>{% if has_api_key %}Actualise l’inventaire depuis Rebrickable.{% else %}Pour saisir des pièces manuellement, ajoute le set dans Mes sets puis active son suivi.{% endif %}</small></div></div>{% endif %}
           </article>
         {% endfor %}
       </div>
@@ -66,39 +78,56 @@
     <div class="results-heading"><h2>Pièces des sets à réunir</h2><span>{{ parts|length }} références · {{ groups|length }} couleurs</span></div>
     <div class="color-groups">
       {% for group in groups %}
-        <details class="color-card color-group" data-color-group data-missing="{{ group.missing }}" {{ 'open' if group.missing else '' }}>
-          <summary class="color-header">
+        <details class="color-card color-group" data-color-group data-missing="{{ group.missing }}" {{ 'open' if group.missing else '' }} data-group-key="{{ group.name }}">
+          <summary class="color-header"{% if group.hex %} style="--brick: {{ group.hex }}"{% endif %}>
             <span class="color-swatch {{ 'swatch-' ~ group.name|lower|replace(' ', '-') }}" title="{{ group.name }}"></span>
             <div class="color-heading"><h3>{{ group.name }}</h3><span>{{ group.parts|length }} référence{{ 's' if group.parts|length != 1 else '' }}</span></div>
-            <span class="color-totals"><strong class="{{ 'accent-found' if group.missing == 0 else 'accent-missing' }}" data-color-missing>{{ group.missing }}</strong><span>pièces à trouver</span></span>
+            <span class="color-totals"><strong class="{{ 'accent-found' if group.missing == 0 else 'accent-missing' }}" data-color-missing>{{ group.missing }}</strong><span class="part-total" data-color-total>/{{ group.quantity }}</span><span>pièces à trouver</span></span>
             <span class="color-group-chevron" aria-hidden="true">⌄</span>
           </summary>
           <div class="parts-grid">
             {% for part in group.parts %}
-              <article class="piece-card">
+                {% set set_count = part.sets|length %}
+                <article class="piece-card{{ ' is-found' if part.missing == 0 else '' }}">
                 <div class="part-image-wrap">
                   {% if part.image_url %}<img class="part-image" src="{{ part.image_url|local_image_url }}" alt="{{ part.part_name }}" loading="lazy">{% else %}<div class="part-image part-placeholder">▦</div>{% endif %}
                   <span class="part-image-label">{{ part.part_name }}</span>
                 </div>
                 <div class="piece-card-heading">
                   <strong>{{ part.part_num }}</strong>
-                  <span class="part-missing-total">
+                  <span class="part-missing-total" data-quantity="{{ part.quantity }}">
                     <strong class="{{ 'accent-found' if part.missing == 0 else 'accent-missing' }}">{{ part.missing }}</strong>
+                    <span class="part-total">/{{ part.quantity }}</span>
                     <span>à trouver</span>
                   </span>
                 </div>
                 <div class="piece-set-list">
+                  {% if set_count > 1 %}<div class="set-list-multi">{% endif %}
                   {% for set in part.sets %}
-                    <form class="set-status-form {{ 'is-complete' if set.missing == 0 else '' }}" action="{{ url_for('update_missing', part_id=set.part_id) }}" method="post" data-set-id="{{ set.id }}" data-quantity="{{ set.quantity }}">
+                    <form class="set-status-form {{ 'is-complete' if set.missing == 0 else '' }} set-tone-{{ set.id % 6 }}" action="{{ url_for('update_missing', part_id=set.part_id) }}" method="post" data-set-id="{{ set.id }}" data-quantity="{{ set.quantity }}"{% if part.item_type == 'minifig' %} data-minifig-parent{% endif %}>
                       <input type="hidden" name="return_to" value="pieces">
-                      <span class="set-tag" title="{{ set.title }}">{{ set.set_num }}{% if set.copy_count > 1 %} · #{{ set.copy_number }}{% endif %}<small>{{ set.title }} · ×{{ set.quantity }}</small></span>
+                      <span class="set-tag" title="{{ set.title }}{% if set.quantity > 1 %} · ×{{ set.quantity }}{% endif %}">{{ set.set_num }}{% if set.copy_count > 1 %} · #{{ set.copy_number }}{% endif %}<small>{{ set.title }}</small></span>
                       <span class="set-missing-count" aria-label="{{ set.missing }} pièce{{ 's' if set.missing != 1 else '' }} manquante{{ 's' if set.missing != 1 else '' }} pour {{ set.set_num }}">{{ set.missing }}</span>
-                      <button class="set-complete-part" type="submit" name="mark_complete" value="1" {{ 'disabled' if set.missing == 0 else '' }}>Tout trouvé</button>
+                      <button class="set-complete-part" type="submit" name="mark_complete" value="1" title="Tout trouvé" aria-label="Marquer toutes les pièces de {{ set.set_num }} comme trouvées" {{ 'disabled' if set.missing == 0 else '' }}>
+                        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m5 12 4 4L19 6"/></svg>
+                      </button>
                       <button class="set-step-button" type="submit" name="change" value="-1" aria-label="Une pièce de moins à trouver pour {{ set.set_num }}" title="Une pièce de moins" {{ 'disabled' if set.missing == 0 else '' }}>−</button>
                       <button class="set-step-button" type="submit" name="change" value="1" aria-label="Une pièce de plus à trouver pour {{ set.set_num }}" title="Une pièce de plus" {{ 'disabled' if set.missing == set.quantity else '' }}>+</button>
                     </form>
                   {% endfor %}
+                  {% if set_count > 1 %}</div>{% endif %}
                 </div>
+                {% if part.stock_qty > 0 %}
+                  <div class="stock-hint {{ 'stock-enough' if part.stock_qty >= part.missing else 'stock-partial' }}" data-stock="{{ part.stock_qty }}" {{ 'hidden' if part.missing == 0 else '' }}>
+                    <span data-stock-status>Vrac : {{ part.stock_qty }} {{ '· suffisant' if part.stock_qty >= part.missing else '· insuffisant (' ~ part.missing ~ ' requis)' }}</span>
+                    <form class="stock-take-form" action="{{ url_for('take_stock_for_part') }}" method="post">
+                      <input type="hidden" name="part_num" value="{{ part.part_num }}">
+                      <input type="hidden" name="color_id" value="{{ part.color_id }}">
+                      <button class="set-complete-part stock-take-button" type="submit" title="Prendre dans le vrac" aria-label="Prendre {{ part.part_name }} dans le vrac"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 4v11m0 0-4-4m4 4 4-4M5 20h14"/></svg></button>
+                    </form>
+                  </div>
+                {% endif %}
+                {% if part.item_type == 'minifig' %}{% for fig_set in part.sets %}{{ minifig_ui.render(part.part_num, minifig_parts_by_set, fig_set) }}{% endfor %}{% endif %}
               </article>
             {% endfor %}
           </div>

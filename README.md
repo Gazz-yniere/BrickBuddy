@@ -22,7 +22,8 @@
 
 [Découvrir l’atelier](#un-atelier-pour-chaque-brique) ·
 [Installer en local](#lancer-en-local) ·
-[Utiliser l’image Docker](#lancer-avec-limage-docker)
+[Utiliser l’image Docker](#lancer-avec-limage-docker) ·
+[Site et démo](https://gazz-yniere.github.io/BrickBuddy/)
 
 </div>
 
@@ -42,11 +43,56 @@ Brick Buddy est une application web en français pour organiser une collection L
 - **Posséder un set ou rechercher ses pièces, c’est distinct** : les deux suivis sont indépendants.
 - **Chaque exemplaire a son propre état** : un set complet et une copie incomplète restent faciles à distinguer.
 - **Les références identiques sont regroupées** pour voir rapidement les quantités à trouver ou déjà disponibles.
+- **Les figurines se vérifient pièce par pièce** dans « Pièces à réunir » : une figurine complète marque ses composants comme trouvés, et son compteur dépend des composants encore manquants. Les quantités tiennent compte de tous les exemplaires de la figurine dans le set.
 - **Recherche, filtres couleur et sections repliables** facilitent la navigation dans les grandes collections.
 - **Les sets peuvent être enrichis avec Rebrickable** : image, année, thème et inventaire des pièces.
 - **Les listes s’exportent** en XML BrickLink ou en CSV BrickOwl.
 - **La connexion est protégée** par un mot de passe partagé, une protection CSRF et une limitation des tentatives.
 - **Les données restent sous ton contrôle** : SQLite et le cache d’images sont conservés dans `data/`.
+
+## Utiliser Brick Buddy
+
+1. **Prépare un set** dans « Pièces à réunir » en entrant sa référence. Avec
+   une clé Rebrickable, son inventaire et, lorsqu'elles sont disponibles, les
+   compositions des figurines sont importés.
+2. **Suis les quantités** avec les boutons `−`, `+` et la coche : ils diminuent,
+   augmentent ou remettent à zéro les pièces à trouver pour un set. Une
+   référence commune à plusieurs sets présente une ligne par set.
+3. **Vérifie les figurines** en dépliant « Pièces de cette figurine ». Les
+   composants se suivent par quantité et par set. Marquer une figurine complète
+   marque ses composants comme trouvés ; une pièce manquante rend la figurine
+   incomplète. Pour plusieurs exemplaires, le composant disponible en quantité
+   la plus limitante détermine combien de figurines sont complètes.
+4. **Gère le vrac** dans « Inventaire ». Dans « Pièces à réunir », le bouton
+   « Prendre dans le vrac » sur une pièce transfère les quantités disponibles
+   vers les sets en recherche. Ce transfert ne crée pas de nouvelles pièces.
+   « Vérifier un set » compare ses besoins au vrac et aux pièces des sets ;
+   cette vérification nécessite une clé Rebrickable.
+5. **Classe le set** avec « J'ai ce set » ou ajoute-le directement dans « Mes
+   sets ». « Suivre » et « Pause » activent ou suspendent sa présence dans
+   « Pièces à réunir » sans le supprimer de la collection. « Tout trouvé » et
+   « Tout chercher » modifient les quantités de tout le set.
+6. **Exporte les besoins** aux formats BrickLink XML ou BrickOwl CSV depuis
+   l'écran approprié.
+
+Sans clé Rebrickable, l'ajout manuel de pièces est disponible dans « Mes sets » :
+ajoute-y le set, déplie-le pour saisir ses pièces, puis utilise « Suivre » si
+tu souhaites les réunir. L'ajout d'un set vide directement dans « Pièces à
+réunir » ne permet pas de saisir ses pièces sur cette page.
+
+## Présentation et démo
+
+Le [site GitHub Pages](https://gazz-yniere.github.io/BrickBuddy/) présente
+le projet, son installation et une démo interactive inspirée de l'atelier.
+La démo permet de naviguer entre les vues, de rechercher des pièces et de
+suivre un set et une figurine fictifs. Le site est publié depuis
+[`docs/`](docs/) par le workflow GitHub Actions après activation de
+**Settings → Pages → Build and deployment → GitHub Actions**.
+
+La démo utilise des données fictives uniquement en mémoire : elle ne se
+connecte ni à ta base ni à Rebrickable et ses modifications disparaissent au
+rechargement. GitHub Pages ne peut pas exécuter le serveur Flask : pour gérer
+une vraie collection, lance l'application localement ou avec Docker.
 
 ## L’atelier en images
 
@@ -108,7 +154,7 @@ APP_PASSWORD=choisis-une-phrase-secrete-de-12-caracteres-minimum
 | `PORT` | Port local ; `8000` par défaut. |
 | `SESSION_COOKIE_SECURE` | À mettre à `true` uniquement si l’application est servie en HTTPS. |
 
-Sans clé Rebrickable, tu peux ajouter les pièces manuellement.
+Sans clé Rebrickable, ajoute le set dans « Mes sets » pour saisir ses pièces manuellement, puis active « Suivre » pour les retrouver dans « Pièces à réunir ».
 
 ## Lancer en local
 
@@ -158,4 +204,8 @@ Le point de contrôle [http://localhost:8000/health](http://localhost:8000/healt
 - L’accès utilise un mot de passe partagé ; il n’y a pas de comptes individuels ni de collections séparées.
 - Si l’application est exposée sur Internet, place-la derrière HTTPS et active `SESSION_COOKIE_SECURE=true`.
 
-Pour le détail des évolutions, consulte le [changelog](CHANGELOG.md).
+Pour contribuer, consulte le [guide de contribution](CONTRIBUTING.md). Les
+évolutions sont détaillées dans le [changelog](CHANGELOG.md) et le code du
+projet est distribué sous [licence MIT](LICENSE). Les images et données
+provenant de Rebrickable, ainsi que les marques citées, restent soumises aux
+droits de leurs détenteurs respectifs.

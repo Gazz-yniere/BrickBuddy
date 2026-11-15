@@ -1,0 +1,26 @@
+<article class="inventory-part-card" data-part="{{ part.part_num }}" data-color="{{ part.color_id }}" data-total="{{ part.total }}" data-stock="{{ part.stock_qty }}" data-sets="{{ part.set_qty }}" data-reserved="{{ part.reserved_qty }}" data-origin="{{ part.origin }}">
+  <div class="part-image-wrap">
+    {% if part.image_url %}<img class="part-image" src="{{ part.image_url|local_image_url }}" alt="{{ part.part_name }}" loading="lazy">{% else %}<div class="part-image part-placeholder">▦</div>{% endif %}
+    <span class="part-image-label">{{ part.part_name }}</span>
+  </div>
+  <div class="piece-card-heading">
+    <strong>Réf. {{ part.part_num }}</strong>
+    <span class="inventory-part-quantity">×{{ part.total }}</span>
+  </div>
+  <div class="part-alloc">
+    {% if part.set_count > 0 %}
+      <div class="alloc-row alloc-sets">
+        <span class="alloc-label">sets</span>
+        <span class="alloc-value">{{ part.set_count }} set{{ 's' if part.set_count > 1 }} · {{ part.set_qty }} pièce{{ 's' if part.set_qty > 1 }}</span>
+      </div>
+    {% endif %}
+    {% include "_stock_row.html" %}
+    {% if part.reserved_qty > 0 %}
+      <div class="alloc-row alloc-reserved">
+        <span class="alloc-label">réservé</span>
+        <span class="alloc-value">{{ part.reserved_qty }} · {{ part.reserved_set_count }} set{{ 's' if part.reserved_set_count > 1 }}</span>
+      </div>
+    {% endif %}
+  </div>
+  {% if part.item_type == 'minifig' %}{{ minifig_ui.render(part.part_num, minifig_parts) }}{% endif %}
+</article>

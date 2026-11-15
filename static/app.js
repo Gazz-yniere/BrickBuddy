@@ -1,3 +1,33 @@
+const minifigDetailsKey = "brickbuddy-minifig-details";
+
+function minifigDetailsId(details) {
+  if (details.hasAttribute("data-group-key")) {
+    return JSON.stringify(["color", details.dataset.groupKey]);
+  }
+  return JSON.stringify(["minifig", details.dataset.minifigSet, details.dataset.minifigFig]);
+}
+
+function reloadMinifigTracking() {
+  const state = {};
+  document.querySelectorAll("details[data-group-key], details[data-minifig-set]").forEach((details) => {
+    state[minifigDetailsId(details)] = details.open;
+  });
+  sessionStorage.setItem(minifigDetailsKey, JSON.stringify(state));
+  window.location.reload();
+}
+
+const savedMinifigDetails = sessionStorage.getItem(minifigDetailsKey);
+if (savedMinifigDetails !== null) {
+  sessionStorage.removeItem(minifigDetailsKey);
+  const state = JSON.parse(savedMinifigDetails);
+  document.querySelectorAll("details[data-group-key], details[data-minifig-set]").forEach((details) => {
+    const id = minifigDetailsId(details);
+    if (Object.hasOwn(state, id)) {
+      details.open = state[id];
+    }
+  });
+}
+
 document.addEventListener("submit", (event) => {
   const form = event.target;
   if (
@@ -59,6 +89,10 @@ document.addEventListener("submit", async (event) => {
     if (!response.ok) {
       throw new Error(result.error || "La quantité n'a pas pu être mise à jour.");
     }
+    if (form.hasAttribute("data-minifig-parent")) {
+      reloadMinifigTracking();
+      return;
+    }
 
     const isComplete = result.missing === 0;
     form.querySelector(".set-missing-count").textContent = result.missing;
@@ -67,6 +101,7 @@ document.addEventListener("submit", async (event) => {
       `${result.missing} pièce${result.missing === 1 ? "" : "s"} manquante${result.missing === 1 ? "" : "s"}`,
     );
     form.classList.toggle("is-complete", isComplete);
+    form.closest(".collection-part-card")?.classList.toggle("part-done", isComplete);
     form.querySelector('button[name="change"][value="-1"]').disabled = isComplete;
     form.querySelector('button[name="change"][value="1"]').disabled =
       result.missing === result.quantity;
@@ -82,16 +117,29 @@ document.addEventListener("submit", async (event) => {
         .forEach((setForm) => {
           const card = setForm.closest(".piece-card");
           const colorGroup = card?.closest("[data-color-group]");
+          const setQuantity = Number(setForm.dataset.quantity) || 0;
           setForm.remove();
           if (!card) {
             return;
           }
           const missing = [...card.querySelectorAll(".set-status-form .set-missing-count")]
             .reduce((total, count) => total + Number(count.textContent), 0);
-          const total = card.querySelector(".part-missing-total strong");
-          total.textContent = String(missing);
-          total.classList.toggle("accent-found", missing === 0);
-          total.classList.toggle("accent-missing", missing > 0);
+          const partMissingTotal = card.querySelector(".part-missing-total");
+          const total = partMissingTotal?.querySelector("strong");
+          if (total) {
+            total.textContent = String(missing);
+            total.classList.toggle("accent-found", missing === 0);
+            total.classList.toggle("accent-missing", missing > 0);
+          }
+          if (partMissingTotal) {
+            const remaining = Math.max(0, Number(partMissingTotal.dataset.quantity || 0) - setQuantity);
+            partMissingTotal.dataset.quantity = String(remaining);
+            const partTotal = partMissingTotal.querySelector(".part-total");
+            if (partTotal) {
+              partTotal.textContent = `/${remaining}`;
+            }
+          }
+          card.classList.toggle("is-found", missing === 0);
           if (!card.querySelector(".set-status-form")) {
             card.remove();
           }
@@ -105,6 +153,7 @@ document.addEventListener("submit", async (event) => {
       partTotal.textContent = result.part_missing;
       partTotal.classList.toggle("accent-found", result.part_missing === 0);
       partTotal.classList.toggle("accent-missing", result.part_missing > 0);
+      pieceCard.classList.toggle("is-found", result.part_missing === 0);
       if (form.querySelector('input[name="return_to"]')?.value === "missing") {
         const total = document.querySelector("#missing-parts-total");
         if (total) {
@@ -147,8 +196,26 @@ document.addEventListener("submit", async (event) => {
     if (completeButton) {
       completeButton.disabled = missing === 0;
     }
+    updateStockHint(form.closest(".piece-card"));
   }
 });
+
+function updateStockHint(card) {
+  const hint = card?.querySelector(".stock-hint");
+  if (!hint) {
+    return;
+  }
+  const missing = [...card.querySelectorAll(".set-status-form .set-missing-count")].reduce(
+    (total, count) => total + Number(count.textContent),
+    0,
+  );
+  const stock = Number(hint.dataset.stock) || 0;
+  hint.hidden = missing === 0;
+  hint.classList.toggle("stock-enough", stock >= missing);
+  hint.classList.toggle("stock-partial", stock < missing);
+  hint.querySelector("[data-stock-status]").textContent =
+    `Vrac : ${stock} ${stock >= missing ? "· suffisant" : `· insuffisant (${missing} requis)`}`;
+}
 
 function updateColorGroup(group) {
   if (!(group instanceof HTMLDetailsElement)) {
@@ -167,5 +234,270 @@ function updateColorGroup(group) {
   total.textContent = String(missing);
   total.classList.toggle("accent-found", missing === 0);
   total.classList.toggle("accent-missing", missing > 0);
+  const quantityTotal = [...group.querySelectorAll(".part-missing-total")].reduce(
+    (sum, element) => sum + (Number(element.dataset.quantity) || 0),
+    0,
+  );
+  const colorTotal = group.querySelector("[data-color-total]");
+  if (colorTotal) {
+    colorTotal.textContent = `/${quantityTotal}`;
+  }
   group.open = missing > 0;
+}
+
+
+function refreshPieceCard(card) {
+  if (!card) {
+    return;
+  }
+  const missing = [...card.querySelectorAll(".set-status-form .set-missing-count")].reduce(
+    (total, count) => total + Number(count.textContent),
+    0,
+  );
+  const total = card.querySelector(".part-missing-total strong");
+  if (total) {
+    total.textContent = String(missing);
+    total.classList.toggle("accent-found", missing === 0);
+    total.classList.toggle("accent-missing", missing > 0);
+  }
+  card.classList.toggle("is-found", missing === 0);
+  updateStockHint(card);
+  updateColorGroup(card.closest("[data-color-group]"));
+}
+
+document.addEventListener("submit", async (event) => {
+  const form = event.target;
+  if (
+    !(form instanceof HTMLFormElement) ||
+    !form.matches(".minifig-part-status-form") ||
+    form.dataset.pending
+  ) {
+    return;
+  }
+
+  event.preventDefault();
+  const button = event.submitter;
+  if (!(button instanceof HTMLButtonElement) || !button.name) {
+    return;
+  }
+
+  form.dataset.pending = "true";
+  const controls = [...form.querySelectorAll("button")];
+  const disabledStates = controls.map((control) => control.disabled);
+  controls.forEach((control) => { control.disabled = true; });
+  const body = new FormData(form);
+  body.set(button.name, button.value);
+
+  try {
+    const response = await fetch(form.action, {
+      method: "POST",
+      body,
+      headers: { "X-Requested-With": "XMLHttpRequest" },
+    });
+    const result = await response.json();
+    if (!response.ok) {
+      throw new Error(result.error || "Le statut de cette pièce n'a pas pu être mis à jour.");
+    }
+
+    reloadMinifigTracking();
+  } catch (error) {
+    showInteractionError(
+      error instanceof Error
+        ? error.message
+        : "Le statut de cette pièce n'a pas pu être mis à jour.",
+    );
+  } finally {
+    delete form.dataset.pending;
+    controls.forEach((control, index) => { control.disabled = disabledStates[index]; });
+  }
+});
+
+document.addEventListener("submit", async (event) => {
+  const form = event.target;
+  if (!(form instanceof HTMLFormElement) || !form.matches(".stock-take-form") || form.dataset.pending) {
+    return;
+  }
+  event.preventDefault();
+  form.dataset.pending = "true";
+  const button = form.querySelector("button");
+  button.disabled = true;
+  try {
+    const response = await fetch(form.action, {
+      method: "POST",
+      body: new FormData(form),
+      headers: { "X-Requested-With": "XMLHttpRequest" },
+    });
+    const result = await response.json();
+    if (!response.ok) {
+      throw new Error(result.error || "Impossible de prendre dans le vrac.");
+    }
+    if (result.updates.some((update) => update.item_type === "minifig")) {
+      reloadMinifigTracking();
+      return;
+    }
+    const card = form.closest(".piece-card");
+    for (const update of result.updates) {
+      const setForm = card.querySelector(`.set-status-form[action$="/parts/${update.part_id}/missing"]`);
+      if (!setForm) {
+        continue;
+      }
+      setForm.querySelector(".set-missing-count").textContent = update.missing;
+      setForm.classList.toggle("is-complete", update.missing === 0);
+      setForm.querySelector('button[name="change"][value="-1"]').disabled = update.missing === 0;
+      setForm.querySelector('button[name="change"][value="1"]').disabled =
+        update.missing >= Number(setForm.dataset.quantity);
+      const completeButton = setForm.querySelector(".set-complete-part");
+      if (completeButton) {
+        completeButton.disabled = update.missing === 0;
+      }
+    }
+    const hint = form.closest(".stock-hint");
+    hint.dataset.stock = String(result.stock_qty);
+    if (result.stock_qty === 0) {
+      hint.remove();
+    }
+    refreshPieceCard(card);
+  } catch (error) {
+    showInteractionError(error instanceof Error ? error.message : "Impossible de prendre dans le vrac.");
+  } finally {
+    delete form.dataset.pending;
+    button.disabled = false;
+  }
+});
+
+document.addEventListener("submit", async (event) => {
+  const form = event.target;
+  if (
+    !(form instanceof HTMLFormElement) ||
+    !form.matches(".stock-step-form, .stock-add-form, .stock-delete-form") ||
+    form.dataset.pending
+  ) {
+    return;
+  }
+
+  event.preventDefault();
+  form.dataset.pending = "true";
+  const controls = [...form.querySelectorAll("button")];
+  const previousStates = controls.map((control) => control.disabled);
+  controls.forEach((control) => {
+    control.disabled = true;
+  });
+
+  const button = event.submitter;
+  const body = new FormData(form);
+  if (button instanceof HTMLButtonElement && button.name) {
+    body.set(button.name, button.value);
+  }
+
+  try {
+    const response = await fetch(form.action, {
+      method: "POST",
+      body,
+      headers: { "X-Requested-With": "XMLHttpRequest" },
+    });
+    const result = await response.json();
+    if (!response.ok) {
+      throw new Error(result.error || "Le vrac n'a pas pu être mis à jour.");
+    }
+
+    const card = form.closest(".inventory-part-card");
+    const group = card?.closest(".inventory-color") || null;
+    if (result.removed) {
+      card?.remove();
+    } else if (card && result.html) {
+      const template = document.createElement("template");
+      template.innerHTML = result.html.trim();
+      const replacement = template.content.firstElementChild;
+      if (replacement) {
+        card.replaceWith(replacement);
+      }
+    }
+    refreshInventoryTotals(group);
+  } catch (error) {
+    previousStates.forEach((disabled, index) => {
+      controls[index].disabled = disabled;
+    });
+    showInteractionError(
+      error instanceof Error ? error.message : "Le vrac n'a pas pu être mis à jour.",
+    );
+  } finally {
+    delete form.dataset.pending;
+  }
+});
+
+function refreshInventoryTotals(group) {
+  if (group instanceof HTMLElement) {
+    const cards = [...group.querySelectorAll(".inventory-part-card")];
+    if (cards.length === 0) {
+      group.remove();
+    } else {
+      const quantity = cards.reduce(
+        (sum, card) => sum + (Number(card.dataset.total) || 0),
+        0,
+      );
+      const colorTotal = group.querySelector(".color-totals strong");
+      if (colorTotal) {
+        colorTotal.textContent = String(quantity);
+      }
+      const referenceLabel = group.querySelector(".color-heading span");
+      if (referenceLabel) {
+        referenceLabel.textContent = `${cards.length} référence${cards.length === 1 ? "" : "s"}`;
+      }
+    }
+  }
+
+  const groups = [...document.querySelectorAll(".inventory-color")];
+  const partCount = groups.reduce(
+    (sum, item) => sum + item.querySelectorAll(".inventory-part-card").length,
+    0,
+  );
+  const totalQuantity = groups.reduce(
+    (sum, item) =>
+      sum +
+      [...item.querySelectorAll(".inventory-part-card")].reduce(
+        (groupSum, card) => groupSum + (Number(card.dataset.total) || 0),
+        0,
+      ),
+    0,
+  );
+
+  const heading = document.querySelector(".results-heading");
+  if (heading) {
+    heading.dataset.partCount = String(partCount);
+    heading.dataset.colorCount = String(groups.length);
+    heading.dataset.totalQuantity = String(totalQuantity);
+    const partLabel = heading.querySelector("[data-part-count-label]");
+    if (partLabel) {
+      partLabel.textContent = `${partCount} référence${partCount === 1 ? "" : "s"}`;
+    }
+    const summary = heading.querySelector("[data-color-summary]");
+    if (summary) {
+      summary.replaceChildren(
+        document.createTextNode(
+          `${groups.length} couleur${groups.length === 1 ? "" : "s"} · `,
+        ),
+      );
+      const quantity = document.createElement("span");
+      quantity.dataset.totalQuantityLabel = "";
+      quantity.textContent = String(totalQuantity);
+      summary.append(quantity, document.createTextNode(" pièces"));
+    }
+    if (groups.length === 0) {
+      heading.remove();
+      document.querySelector(".origin-legend")?.remove();
+    }
+  }
+}
+
+function showInteractionError(message) {
+  const container = document.querySelector("#interaction-messages");
+  if (!container) {
+    return;
+  }
+  container.replaceChildren();
+  const flash = document.createElement("div");
+  flash.className = "flash error";
+  flash.textContent = message;
+  container.append(flash);
+  container.hidden = false;
 }

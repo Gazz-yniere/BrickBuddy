@@ -34,8 +34,188 @@ app.config.update(
     in {"1", "true", "yes", "on"},
 )
 
-LOGIN_ATTEMPT_WINDOW_SECONDS = 15 * 60
-LOGIN_MAX_ATTEMPTS = 5
+# Couleurs LEGO officielles (noms Rebrickable -> hexadecimal RGB).
+# Source : https://rebrickable.com/colors/ (273 couleurs, capture du 30/10/2026).
+LEGO_COLOR_HEX = {
+    "Black": "#05131D",
+    "White": "#FFFFFF",
+    "Red": "#C91A09",
+    "Blue": "#0055BF",
+    "Green": "#237841",
+    "Yellow": "#F2CD37",
+    "Orange": "#FE8A18",
+    "Dark Orange": "#A95500",
+    "Medium Orange": "#FFA70B",
+    "Bright Light Orange": "#F8BB3D",
+    "Light Orange": "#F9BA61",
+    "Very Light Orange": "#F3CF9B",
+    "Dark Red": "#720E0F",
+    "Brown": "#583927",
+    "Reddish Brown": "#582A12",
+    "Dark Brown": "#352100",
+    "Light Brown": "#7C503A",
+    "Medium Brown": "#755945",
+    "Tan": "#E4CD9E",
+    "Dark Tan": "#958A73",
+    "Light Tan": "#F3C988",
+    "Nougat": "#D09168",
+    "Light Nougat": "#F6D7B3",
+    "Medium Nougat": "#AA7D55",
+    "Dark Nougat": "#AD6140",
+    "Pink": "#FC97AC",
+    "Light Pink": "#FECCCF",
+    "Bright Pink": "#E4ADC8",
+    "Dark Pink": "#C870A0",
+    "Medium Dark Pink": "#F785B1",
+    "Light Salmon": "#FEBABD",
+    "Salmon": "#F2705E",
+    "Coral": "#FF698F",
+    "Bright Reddish Orange": "#EE5434",
+    "Reddish Orange": "#CA4C0B",
+    "Sand Red": "#D67572",
+    "Earth Orange": "#FA9C1C",
+    "Rust": "#B31004",
+    "Magenta": "#923978",
+    "Purple": "#81007B",
+    "Dark Purple": "#3F3691",
+    "Light Purple": "#CD6298",
+    "Medium Violet": "#9391E4",
+    "Violet": "#4354A3",
+    "Dark Blue-Violet": "#2032B0",
+    "Medium Bluish Violet": "#6874CA",
+    "Lavender": "#E1D5ED",
+    "Medium Lavender": "#AC78BA",
+    "Light Lilac": "#9195CA",
+    "Reddish Lilac": "#8E5597",
+    "Sand Purple": "#845E84",
+    "Lime": "#BBE90B",
+    "Medium Lime": "#C7D23C",
+    "Light Lime": "#D9E4A7",
+    "Yellowish Green": "#DFEEA5",
+    "Olive Green": "#9B9A5A",
+    "Bright Green": "#4B9F4A",
+    "Medium Green": "#73DCA1",
+    "Light Green": "#C2DAB8",
+    "Sand Green": "#A0BCAC",
+    "Dark Green": "#184632",
+    "Bright Light Yellow": "#FFF03A",
+    "Light Yellow": "#FBE696",
+    "Dark Turquoise": "#008F9B",
+    "Light Turquoise": "#55A5AF",
+    "Aqua": "#B3D7D1",
+    "Light Aqua": "#ADC3C0",
+    "Sky Blue": "#7DBFDD",
+    "Medium Azure": "#36AEBF",
+    "Dark Azure": "#078BC9",
+    "Maersk Blue": "#3592C3",
+    "Pastel Blue": "#5AC4DA",
+    "Light Blue": "#B4D2E3",
+    "Bright Light Blue": "#9FC3E9",
+    "Medium Blue": "#5A93DB",
+    "Dark Blue": "#0A3463",
+    "Royal Blue": "#4C61DB",
+    "Sand Blue": "#6074A1",
+    "Light Bluish Gray": "#A0A5A9",
+    "Dark Bluish Gray": "#6C6E68",
+    "Light Gray": "#9BA19D",
+    "Dark Gray": "#6D6E5C",
+    "Very Light Bluish Gray": "#E6E3E0",
+    "Very Light Gray": "#E6E3DA",
+    "Milky White": "#FFFFFF",
+    "Trans-Clear": "#FCFCFC",
+    "Trans-Black": "#635F52",
+    "Trans-Brown": "#635F52",
+    "Trans-Black IR Lens": "#635F52",
+    "Trans-Red": "#C91A09",
+    "Trans-Yellow": "#F5CD2F",
+    "Trans-Neon Yellow": "#DAB000",
+    "Trans-Neon Green": "#F8F184",
+    "Trans-Neon Orange": "#FF800D",
+    "Trans-Neon Red": "#FF0040",
+    "Trans-Orange": "#F08F1C",
+    "Trans-Flame Yellowish Orange": "#FCB76D",
+    "Trans-Fire Yellow": "#FBE890",
+    "Trans-Dark Blue": "#0020A0",
+    "Trans-Medium Blue": "#CFE2F7",
+    "Trans-Light Blue": "#AEEFEC",
+    "Trans-Very Lt Blue": "#C1DFF0",
+    "Trans-Light Royal Blue": "#B4D4F7",
+    "Trans-Green": "#84B68D",
+    "Trans-Bright Green": "#D9E4A7",
+    "Trans-Light Bright Green": "#C9E788",
+    "Trans-Light Green": "#94E5AB",
+    "Trans-Purple": "#A5A5CB",
+    "Trans-Medium Purple": "#8D73B3",
+    "Trans-Light Purple": "#96709F",
+    "Trans-Dark Pink": "#DF6695",
+    "Trans-Pink": "#E4ADC8",
+    "Glitter Trans-Clear": "#FFFFFF",
+    "Glitter Trans-Orange": "#F08F1C",
+    "Glitter Trans-Bright Green": "#D9E4A7",
+    "Glitter Trans-Neon Green": "#C0F500",
+    "Glitter Trans-Light Blue": "#68BCC5",
+    "Glitter Trans-Purple": "#A5A5CB",
+    "Glitter Trans-Medium Purple": "#8D73B3",
+    "Glitter Trans-Pink": "#E4ADC8",
+    "Glitter Trans-Green": "#84B68D",
+    "Glitter Trans-Dark Pink": "#DF6695",
+    "Opal Trans-Clear": "#FCFCFC",
+    "Opal Trans-Brown": "#583927",
+    "Opal Trans-Yellow": "#F5CD2F",
+    "Opal Trans-Bright Green": "#84B68D",
+    "Opal Trans-Light Blue": "#68BCC5",
+    "Opal Trans-Dark Blue": "#0020A0",
+    "Opal Trans-Dark Pink": "#CE1D9B",
+    "Opal Trans-Purple": "#8320B7",
+    "Glow In Dark Trans": "#BDC6AD",
+    "Flat Silver": "#898788",
+    "Flat Dark Gold": "#B48455",
+    "Metallic Silver": "#A5A9B4",
+    "Metallic Green": "#899B5F",
+    "Metallic Gold": "#DBAC34",
+    "Metallic Copper": "#764D3B",
+    "Metal": "#A5ADB4",
+    "Chrome Silver": "#E0E0E0",
+    "Chrome Gold": "#BBA53D",
+    "Chrome Antique Brass": "#645A4C",
+    "Chrome Blue": "#6C96BF",
+    "Chrome Green": "#3CB371",
+    "Chrome Pink": "#AA4D8E",
+    "Chrome Black": "#1B2A34",
+    "Chrome Red": "#CE3021",
+    "Copper": "#AE7A59",
+    "Reddish Gold": "#AC8247",
+    "Speckle Black-Copper": "#05131D",
+    "Speckle Black-Silver": "#05131D",
+    "Speckle Black-Gold": "#05131D",
+    "Speckle DBGray-Silver": "#6C6E68",
+    "Pearl Light Gray": "#9CA3A8",
+    "Pearl Dark Gray": "#575857",
+    "Pearl Very Light Gray": "#ABADAC",
+    "Pearl White": "#F2F3F2",
+    "Pearl Gold": "#AA7F2E",
+    "Pearl Light Gold": "#DCBC81",
+    "Pearl Copper": "#B46A00",
+    "Pearl Brown": "#57392C",
+    "Pearl Black": "#0A1327",
+    "Pearl Blue": "#0059A3",
+    "Pearl Green": "#008E3C",
+    "Pearl Red": "#D60026",
+    "Pearl Lime": "#6A7944",
+    "Pearl Sand Blue": "#7988A1",
+    "Pearl Titanium": "#3E3C39",
+    "Glow In Dark Opaque": "#D4D5C9",
+    "Glow in Dark White": "#D9D9D9",
+}
+
+# Couleurs sans brique reelle : pas de degrade possible sur les en-tetes.
+COLORS_WITHOUT_HEX = {"", "Figurine", "[No Color/Any Color]"}
+
+
+def lego_color_hex(color_name):
+    if not color_name or color_name in COLORS_WITHOUT_HEX:
+        return None
+    return LEGO_COLOR_HEX.get(color_name)
 
 
 def authentication_config_error():
@@ -69,12 +249,6 @@ def safe_redirect_target(target):
     return url_for("pieces_page")
 
 
-def login_attempt_key():
-    secret_key = app.secret_key.encode("utf-8")
-    address = request.remote_addr or "unknown"
-    return hmac.new(secret_key, address.encode("utf-8"), hashlib.sha256).hexdigest()
-
-
 def authentication_version():
     password = os.environ["APP_PASSWORD"]
     return hmac.new(
@@ -82,67 +256,6 @@ def authentication_version():
         password.encode("utf-8"),
         hashlib.sha256,
     ).hexdigest()
-
-
-def get_login_lockout(attempt_key, now):
-    with database() as connection:
-        row = connection.execute(
-            "SELECT locked_until FROM login_attempts WHERE address_hash = ?",
-            (attempt_key,),
-        ).fetchone()
-    return max(0, row["locked_until"] - now) if row else 0
-
-
-def record_failed_login(attempt_key, now):
-    with database() as connection:
-        connection.execute("BEGIN IMMEDIATE")
-        row = connection.execute(
-            """
-            SELECT attempts, window_started_at, locked_until
-            FROM login_attempts WHERE address_hash = ?
-            """,
-            (attempt_key,),
-        ).fetchone()
-        if row and row["locked_until"] > now:
-            return row["locked_until"] - now
-
-        if row and now - row["window_started_at"] < LOGIN_ATTEMPT_WINDOW_SECONDS:
-            attempts = row["attempts"] + 1
-            window_started_at = row["window_started_at"]
-        else:
-            attempts = 1
-            window_started_at = now
-        locked_until = (
-            now + LOGIN_ATTEMPT_WINDOW_SECONDS
-            if attempts >= LOGIN_MAX_ATTEMPTS
-            else 0
-        )
-        connection.execute(
-            """
-            INSERT INTO login_attempts
-                (address_hash, attempts, window_started_at, locked_until)
-            VALUES (?, ?, ?, ?)
-            ON CONFLICT(address_hash) DO UPDATE SET
-                attempts = excluded.attempts,
-                window_started_at = excluded.window_started_at,
-                locked_until = excluded.locked_until
-            """,
-            (attempt_key, attempts, window_started_at, locked_until),
-        )
-        connection.execute(
-            """
-            DELETE FROM login_attempts
-            WHERE address_hash != ?
-              AND locked_until <= ?
-              AND window_started_at < ?
-            """,
-            (
-                attempt_key,
-                now,
-                now - LOGIN_ATTEMPT_WINDOW_SECONDS,
-            ),
-        )
-    return max(0, locked_until - now)
 
 
 @app.before_request
@@ -212,54 +325,21 @@ def login_submit():
     if not csrf_token or not hmac.compare_digest(csrf_token, submitted_csrf):
         abort(400, description="Formulaire de connexion expiré. Rechargez la page.")
 
-    attempt_key = login_attempt_key()
-    now = time.time()
-    retry_after = get_login_lockout(attempt_key, now)
-    if retry_after:
-        response = make_response(
-            render_template(
-                "login.html",
-                next_target=safe_redirect_target(request.form.get("next", "")),
-                csrf_token=csrf_token,
-                error="Trop de tentatives. Réessayez dans 15 minutes.",
-                config_error=None,
-            ),
-            429,
-        )
-        response.headers["Retry-After"] = str(int(retry_after))
-        return response
-
     password_matches = hmac.compare_digest(
         os.environ["APP_PASSWORD"].encode("utf-8"),
         request.form.get("password", "").encode("utf-8"),
     )
 
     if not password_matches:
-        retry_after = record_failed_login(attempt_key, now)
         app.logger.warning("Rejected login attempt")
-        message = (
-            "Trop de tentatives. Réessayez dans 15 minutes."
-            if retry_after
-            else "Mot de passe incorrect."
-        )
-        response = make_response(
-            render_template(
-                "login.html",
-                next_target=safe_redirect_target(request.form.get("next", "")),
-                csrf_token=csrf_token,
-                error=message,
-                config_error=None,
-            ),
-            429 if retry_after else 401,
-        )
-        if retry_after:
-            response.headers["Retry-After"] = str(int(retry_after))
-        return response
+        return render_template(
+            "login.html",
+            next_target=safe_redirect_target(request.form.get("next", "")),
+            csrf_token=csrf_token,
+            error="Mot de passe incorrect.",
+            config_error=None,
+        ), 401
 
-    with database() as connection:
-        connection.execute(
-            "DELETE FROM login_attempts WHERE address_hash = ?", (attempt_key,)
-        )
     session.clear()
     session.permanent = True
     session["authenticated"] = True
@@ -511,8 +591,37 @@ def initialize_database():
                 quantity INTEGER NOT NULL CHECK(quantity > 0),
                 missing_quantity INTEGER NOT NULL CHECK(missing_quantity >= 0),
                 image_url TEXT NOT NULL DEFAULT '',
+                item_type TEXT NOT NULL DEFAULT 'part',
                 UNIQUE(set_id, part_num, color_id)
             );
+            CREATE TABLE IF NOT EXISTS minifig_parts (
+                id INTEGER PRIMARY KEY,
+                set_id INTEGER NOT NULL REFERENCES sets(id) ON DELETE CASCADE,
+                fig_num TEXT NOT NULL,
+                part_num TEXT NOT NULL,
+                part_name TEXT NOT NULL,
+                color_id INTEGER NOT NULL,
+                color_name TEXT NOT NULL,
+                quantity INTEGER NOT NULL CHECK(quantity > 0),
+                missing_quantity INTEGER NOT NULL DEFAULT 0 CHECK(missing_quantity >= 0),
+                tracking_version INTEGER NOT NULL DEFAULT 1,
+                image_url TEXT NOT NULL DEFAULT '',
+                UNIQUE(set_id, fig_num, part_num, color_id)
+            );
+            CREATE INDEX IF NOT EXISTS idx_minifig_parts_set_fig ON minifig_parts(set_id, fig_num);
+            CREATE TABLE IF NOT EXISTS stock_parts (
+                id INTEGER PRIMARY KEY,
+                part_num TEXT NOT NULL,
+                part_name TEXT NOT NULL,
+                color_id INTEGER NOT NULL DEFAULT 0,
+                color_name TEXT NOT NULL DEFAULT 'Unknown',
+                quantity INTEGER NOT NULL CHECK(quantity > 0),
+                image_url TEXT NOT NULL DEFAULT '',
+                item_type TEXT NOT NULL DEFAULT 'part',
+                created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(part_num, color_id)
+            );
+            CREATE INDEX IF NOT EXISTS idx_stock_parts_key ON stock_parts(part_num, color_id);
             CREATE TABLE IF NOT EXISTS rebrickable_request_gate (
                 id INTEGER PRIMARY KEY CHECK(id = 1),
                 next_request_at REAL NOT NULL DEFAULT 0
@@ -523,12 +632,6 @@ def initialize_database():
                 image_key TEXT PRIMARY KEY,
                 source_url TEXT NOT NULL,
                 content_type TEXT NOT NULL DEFAULT ''
-            );
-            CREATE TABLE IF NOT EXISTS login_attempts (
-                address_hash TEXT PRIMARY KEY,
-                attempts INTEGER NOT NULL,
-                window_started_at REAL NOT NULL,
-                locked_until REAL NOT NULL DEFAULT 0
             );
             """
         )
@@ -566,6 +669,61 @@ def initialize_database():
             )
         if "year" not in columns:
             connection.execute("ALTER TABLE sets ADD COLUMN year INTEGER")
+        part_columns = {
+            row["name"] for row in connection.execute("PRAGMA table_info(set_parts)")
+        }
+        if "item_type" not in part_columns:
+            connection.execute(
+                "ALTER TABLE set_parts ADD COLUMN item_type TEXT NOT NULL DEFAULT 'part'"
+            )
+        minifig_part_columns = {
+            row["name"] for row in connection.execute("PRAGMA table_info(minifig_parts)")
+        }
+        if "missing_quantity" not in minifig_part_columns:
+            connection.execute(
+                "ALTER TABLE minifig_parts ADD COLUMN missing_quantity "
+                "INTEGER NOT NULL DEFAULT 0 CHECK(missing_quantity >= 0)"
+            )
+            connection.execute(
+                "UPDATE minifig_parts SET missing_quantity = quantity"
+            )
+        if "tracking_version" not in minifig_part_columns:
+            connection.execute(
+                "ALTER TABLE minifig_parts ADD COLUMN tracking_version INTEGER NOT NULL DEFAULT 0"
+            )
+        connection.execute(
+            """
+            UPDATE minifig_parts
+            SET missing_quantity = CASE
+                WHEN (SELECT p.missing_quantity FROM set_parts p
+                      WHERE p.set_id = minifig_parts.set_id
+                        AND p.part_num = minifig_parts.fig_num
+                        AND p.item_type = 'minifig') = 0 THEN 0
+                ELSE missing_quantity * COALESCE(
+                    (SELECT p.missing_quantity FROM set_parts p
+                     WHERE p.set_id = minifig_parts.set_id
+                       AND p.part_num = minifig_parts.fig_num
+                       AND p.item_type = 'minifig'), 1)
+                END,
+                tracking_version = 1
+            WHERE tracking_version = 0
+            """
+        )
+        connection.execute(
+            """
+            UPDATE set_parts
+            SET missing_quantity = (
+                SELECT MIN(set_parts.quantity, MAX(
+                    (mp.missing_quantity + mp.quantity - 1) / mp.quantity))
+                FROM minifig_parts mp
+                WHERE mp.set_id = set_parts.set_id AND mp.fig_num = set_parts.part_num
+            )
+            WHERE item_type = 'minifig' AND EXISTS (
+                SELECT 1 FROM minifig_parts mp
+                WHERE mp.set_id = set_parts.set_id AND mp.fig_num = set_parts.part_num
+            )
+            """
+        )
         connection.execute(
             """
             UPDATE sets
@@ -699,6 +857,7 @@ def fetch_set_inventory(set_num):
                     "color_name": color.get("name") or "Unknown",
                     "quantity": 0,
                     "image_url": part.get("part_img_url") or "",
+                    "item_type": "part",
                 },
             )
             entry["quantity"] += int(item.get("quantity") or 0)
@@ -708,7 +867,294 @@ def fetch_set_inventory(set_num):
             next_page = parsed.path.removeprefix("/api/v3/lego/")
             if parsed.query:
                 next_page += f"?{parsed.query}"
+
+    minifigs = {}
+    try:
+        figs_next = (
+            f"sets/{urllib.parse.quote(set_num, safe='-')}/minifigs/?page_size=1000"
+        )
+        while figs_next:
+            page = rebrickable_get(figs_next)
+            for item in page.get("results", []):
+                fig_num = item.get("set_num") or ""
+                if not fig_num.startswith("fig-"):
+                    continue
+                try:
+                    fig_quantity = int(item.get("quantity") or 0)
+                except (TypeError, ValueError):
+                    continue
+                if fig_quantity <= 0:
+                    continue
+                minifigs[(fig_num, 0)] = {
+                    "part_num": fig_num,
+                    "part_name": item.get("set_name") or fig_num,
+                    "color_id": 0,
+                    "color_name": "Figurine",
+                    "quantity": fig_quantity,
+                    "image_url": item.get("set_img_url") or "",
+                    "item_type": "minifig",
+                }
+            figs_next = page.get("next")
+            if figs_next:
+                parsed = urllib.parse.urlparse(figs_next)
+                figs_next = parsed.path.removeprefix("/api/v3/lego/")
+                if parsed.query:
+                    figs_next += f"?{parsed.query}"
+    except (RuntimeError, ValueError):
+        pass
+
+    for key, minifig in minifigs.items():
+        parts.setdefault(key, minifig)
     return set_info, list(parts.values())
+
+
+def fetch_minifig_parts_for_set(set_num):
+    """Récupère la composition de chaque figurine d'un set (informatif uniquement)."""
+    rows = []
+    figs_next = f"sets/{urllib.parse.quote(set_num, safe='-')}/minifigs/?page_size=1000"
+    seen_fig_nums = set()
+    while figs_next:
+        page = rebrickable_get(figs_next)
+        for item in page.get("results", []):
+            fig_num = item.get("set_num") or ""
+            if not fig_num.startswith("fig-"):
+                continue
+            try:
+                fig_quantity = int(item.get("quantity") or 0)
+            except (TypeError, ValueError):
+                continue
+            if fig_quantity <= 0 or fig_num in seen_fig_nums:
+                continue
+            seen_fig_nums.add(fig_num)
+            try:
+                parts_next = (
+                    f"minifigs/{urllib.parse.quote(fig_num, safe='-')}"
+                    "/parts/?page_size=1000"
+                )
+                fig_rows = {}
+                while parts_next:
+                    parts_page = rebrickable_get(parts_next)
+                    for part_item in parts_page.get("results", []):
+                        color = part_item.get("color") or {}
+                        part = part_item.get("part") or {}
+                        part_num = part.get("part_num") or ""
+                        if not part_num:
+                            continue
+                        try:
+                            color_id = int(color.get("id") or 0)
+                        except (TypeError, ValueError):
+                            color_id = 0
+                        try:
+                            quantity = int(part_item.get("quantity") or 0)
+                        except (TypeError, ValueError):
+                            quantity = 0
+                        key = (part_num, color_id)
+                        entry = fig_rows.get(key)
+                        if entry is None:
+                            fig_rows[key] = {
+                                "fig_num": fig_num,
+                                "part_num": part_num,
+                                "part_name": part.get("name") or part_num,
+                                "color_id": color_id,
+                                "color_name": color.get("name") or "Unknown",
+                                "quantity": quantity,
+                                "image_url": part.get("part_img_url") or "",
+                            }
+                        else:
+                            entry["quantity"] += quantity
+                    parts_next = parts_page.get("next")
+                    if parts_next:
+                        parsed = urllib.parse.urlparse(parts_next)
+                        parts_next = parsed.path.removeprefix("/api/v3/lego/")
+                        if parsed.query:
+                            parts_next += f"?{parsed.query}"
+            except (RuntimeError, ValueError):
+                continue
+            rows.extend(
+                row for row in fig_rows.values() if row["quantity"] > 0
+            )
+        figs_next = page.get("next")
+        if figs_next:
+            parsed = urllib.parse.urlparse(figs_next)
+            figs_next = parsed.path.removeprefix("/api/v3/lego/")
+            if parsed.query:
+                figs_next += f"?{parsed.query}"
+    return rows
+
+
+def get_minifig_parts_map():
+    """Composition des figurines, agrégée par (fig_num, part_num, color_id)."""
+    with database() as connection:
+        rows = connection.execute(
+            """
+            SELECT fig_num, part_num, part_name, color_id, color_name,
+                   MAX(quantity) AS quantity, MAX(image_url) AS image_url
+            FROM minifig_parts
+            GROUP BY fig_num, part_num, color_id
+            ORDER BY fig_num, color_name COLLATE NOCASE,
+                     part_name COLLATE NOCASE
+            """
+        ).fetchall()
+    mapping = {}
+    for row in rows:
+        mapping.setdefault(row["fig_num"], []).append(
+            {
+                "fig_num": row["fig_num"],
+                "part_num": row["part_num"],
+                "part_name": row["part_name"],
+                "color_id": int(row["color_id"] or 0),
+                "color_name": row["color_name"],
+                "quantity": int(row["quantity"] or 0),
+                "image_url": row["image_url"] or "",
+            }
+        )
+    return mapping
+
+
+def get_gathering_minifig_parts_map():
+    with database() as connection:
+        rows = connection.execute(
+            """
+            SELECT mp.id, mp.set_id, mp.fig_num, mp.part_num, mp.part_name,
+                   mp.color_id, mp.color_name, mp.quantity * p.quantity AS quantity,
+                   mp.missing_quantity,
+                   mp.image_url
+            FROM minifig_parts mp
+            JOIN sets s ON s.id = mp.set_id
+            JOIN set_parts p ON p.set_id = mp.set_id
+                AND p.part_num = mp.fig_num AND p.item_type = 'minifig'
+            WHERE s.in_gathering = 1
+            ORDER BY mp.set_id, mp.fig_num, mp.color_name COLLATE NOCASE,
+                     mp.part_name COLLATE NOCASE
+            """
+        ).fetchall()
+    mapping = {}
+    for row in rows:
+        mapping.setdefault(row["set_id"], {}).setdefault(row["fig_num"], []).append(
+            {
+                "id": row["id"],
+                "fig_num": row["fig_num"],
+                "part_num": row["part_num"],
+                "part_name": row["part_name"],
+                "color_id": int(row["color_id"] or 0),
+                "color_name": row["color_name"],
+                "quantity": int(row["quantity"] or 0),
+                "missing_quantity": int(row["missing_quantity"] or 0),
+                "image_url": row["image_url"] or "",
+            }
+        )
+    return mapping
+
+
+def sync_minifig_components_from_parent(connection, part_id, previous_missing):
+    parent = connection.execute(
+        "SELECT set_id, part_num, item_type, missing_quantity FROM set_parts WHERE id = ?",
+        (part_id,),
+    ).fetchone()
+    if not parent or parent["item_type"] != "minifig":
+        return
+    missing = parent["missing_quantity"]
+    if missing == previous_missing:
+        return
+    connection.execute(
+        """
+        UPDATE minifig_parts
+        SET missing_quantity = MAX(0, missing_quantity + quantity * ?)
+        WHERE set_id = ? AND fig_num = ?
+        """,
+        (missing - previous_missing, parent["set_id"], parent["part_num"]),
+    )
+
+
+def sync_minifig_parent_from_components(connection, set_id, fig_num):
+    connection.execute(
+        """
+        UPDATE set_parts
+        SET missing_quantity = (
+            SELECT MIN(set_parts.quantity, MAX(
+                (mp.missing_quantity + mp.quantity - 1) / mp.quantity))
+            FROM minifig_parts mp
+            WHERE mp.set_id = set_parts.set_id AND mp.fig_num = set_parts.part_num
+        )
+        WHERE set_id = ? AND part_num = ? AND item_type = 'minifig'
+          AND EXISTS (
+              SELECT 1 FROM minifig_parts mp
+              WHERE mp.set_id = set_parts.set_id AND mp.fig_num = set_parts.part_num
+          )
+        """,
+        (set_id, fig_num),
+    )
+
+
+def replace_set_minifig_parts(
+    connection, set_id, rows, all_parts_found=False, previous_figure_quantities=None
+):
+    previous_components = {
+        (row["fig_num"], row["part_num"], row["color_id"]): row
+        for row in connection.execute(
+            """
+            SELECT fig_num, part_num, color_id, quantity, missing_quantity
+            FROM minifig_parts WHERE set_id = ?
+            """,
+            (set_id,),
+        ).fetchall()
+    }
+    parents = {
+        row["part_num"]: row
+        for row in connection.execute(
+            """
+            SELECT part_num, quantity, missing_quantity FROM set_parts
+            WHERE set_id = ? AND item_type = 'minifig'
+            """,
+            (set_id,),
+        )
+    }
+    previous_figure_quantities = previous_figure_quantities or {
+        fig_num: parent["quantity"] for fig_num, parent in parents.items()
+    }
+    components = []
+    for row in rows:
+        fig_num = row.get("fig_num") or ""
+        part_num = row.get("part_num") or ""
+        color_id = int(row.get("color_id") or 0)
+        quantity = int(row.get("quantity") or 0)
+        parent = parents.get(fig_num)
+        figure_quantity = parent["quantity"] if parent else 1
+        previous = previous_components.get((fig_num, part_num, color_id))
+        if previous is not None:
+            previous_total = previous["quantity"] * previous_figure_quantities.get(fig_num, 1)
+            found = max(0, previous_total - previous["missing_quantity"])
+            missing = max(0, quantity * figure_quantity - found)
+        else:
+            missing_figures = parent["missing_quantity"] if parent else (0 if all_parts_found else 1)
+            missing = quantity * missing_figures
+        components.append(
+            {
+                "set_id": set_id,
+                "fig_num": fig_num,
+                "part_num": part_num,
+                "part_name": row.get("part_name") or part_num,
+                "color_id": color_id,
+                "color_name": row.get("color_name") or "Unknown",
+                "quantity": quantity,
+                "missing_quantity": missing,
+                "image_url": row.get("image_url") or "",
+            }
+        )
+    connection.execute("DELETE FROM minifig_parts WHERE set_id = ?", (set_id,))
+    connection.executemany(
+        """
+        INSERT INTO minifig_parts
+            (set_id, fig_num, part_num, part_name, color_id, color_name,
+             quantity, missing_quantity, image_url)
+        VALUES
+            (:set_id, :fig_num, :part_num, :part_name, :color_id, :color_name,
+             :quantity, :missing_quantity, :image_url)
+        """,
+        components,
+    )
+    for fig_num in {row.get("fig_num") or "" for row in rows}:
+        sync_minifig_parent_from_components(connection, set_id, fig_num)
 
 
 @app.get("/")
@@ -729,6 +1175,176 @@ def health():
         app.logger.exception("Health check failed while accessing the database")
         return jsonify(status="unhealthy"), 503
     return jsonify(status="ok")
+
+
+def get_owned_parts(connection):
+    """Agrège toutes les pièces possédées, tous emplacements confondus.
+
+    Le total possédé est toujours recalculé (jamais stocké) :
+    total = vrac + pièces issues des sets en collection + pièces réservées
+    (sets en préparation dont la pièce a été trouvée au moins en partie).
+    """
+    rows = connection.execute(
+        """
+        SELECT part_num, color_id,
+               MAX(part_name) AS part_name,
+               MAX(color_name) AS color_name,
+               MAX(item_type) AS item_type,
+               MAX(image_url) AS image_url,
+               SUM(stock_qty) AS stock_qty,
+               SUM(set_qty) AS set_qty,
+               SUM(reserved_qty) AS reserved_qty
+        FROM (
+            SELECT sp.part_num, sp.color_id, sp.part_name, sp.color_name,
+                   sp.item_type, sp.image_url,
+                   sp.quantity AS stock_qty, 0 AS set_qty, 0 AS reserved_qty
+            FROM stock_parts sp
+            UNION ALL
+            SELECT p.part_num, p.color_id, MAX(p.part_name), MAX(p.color_name),
+                   MAX(p.item_type), MAX(p.image_url),
+                   0, SUM(p.quantity - p.missing_quantity), 0
+            FROM set_parts p JOIN sets s ON s.id = p.set_id
+            WHERE s.in_collection = 1
+            GROUP BY p.part_num, p.color_id
+            UNION ALL
+            SELECT p.part_num, p.color_id, MAX(p.part_name), MAX(p.color_name),
+                   MAX(p.item_type), MAX(p.image_url),
+                   0, 0, SUM(p.quantity - p.missing_quantity)
+            FROM set_parts p JOIN sets s ON s.id = p.set_id
+            WHERE s.in_gathering = 1 AND s.in_collection = 0
+              AND p.missing_quantity < p.quantity
+            GROUP BY p.part_num, p.color_id
+        )
+        GROUP BY part_num, color_id
+        HAVING SUM(stock_qty) + SUM(set_qty) + SUM(reserved_qty) > 0
+        ORDER BY color_name COLLATE NOCASE, part_name COLLATE NOCASE,
+                 part_num, item_type
+        """
+    ).fetchall()
+
+    reserved_set_nums = {}
+    reserved_set_tones = {}
+    for row in connection.execute(
+        """
+        SELECT p.part_num, p.color_id, s.set_num, s.id AS set_id
+        FROM set_parts p JOIN sets s ON s.id = p.set_id
+        WHERE s.in_gathering = 1 AND s.in_collection = 0
+          AND p.missing_quantity < p.quantity
+        ORDER BY s.set_num, s.id
+        """
+    ):
+        key = (row["part_num"], int(row["color_id"]))
+        reserved_set_nums.setdefault(key, []).append(row["set_num"])
+        tones = reserved_set_tones.setdefault(key, [])
+        tone = int(row["set_id"]) % 6
+        if tone not in tones:
+            tones.append(tone)
+
+    collected_set_counts = {
+        (row["part_num"], int(row["color_id"])): int(row["set_count"] or 0)
+        for row in connection.execute(
+            """
+            SELECT p.part_num, p.color_id, COUNT(DISTINCT s.id) AS set_count
+            FROM set_parts p JOIN sets s ON s.id = p.set_id
+            WHERE s.in_collection = 1
+              AND p.quantity > p.missing_quantity
+            GROUP BY p.part_num, p.color_id
+            """
+        )
+    }
+
+    stock_ids = {
+        (row["part_num"], int(row["color_id"])): row["id"]
+        for row in connection.execute(
+            "SELECT id, part_num, color_id FROM stock_parts"
+        )
+    }
+
+    owned = {}
+    for row in rows:
+        key = (row["part_num"], int(row["color_id"] or 0))
+        stock_qty = int(row["stock_qty"] or 0)
+        set_qty = int(row["set_qty"] or 0)
+        reserved_qty = int(row["reserved_qty"] or 0)
+        total = stock_qty + set_qty + reserved_qty
+        counter_count = sum(
+            1 for quantity in (stock_qty, set_qty, reserved_qty) if quantity > 0
+        )
+        if counter_count == 1:
+            if stock_qty > 0:
+                origin = "stock"
+            elif set_qty > 0:
+                origin = "sets"
+            else:
+                origin = "reserved"
+        else:
+            origin = "mixed"
+
+        badges = []
+        if stock_qty > 0 and set_qty > 0:
+            badges.append({"label": "Sets + vrac", "tone": "mixed"})
+        elif stock_qty > 0:
+            badges.append({"label": "En stock", "tone": "stock"})
+        elif set_qty > 0:
+            badges.append({"label": "Dans un set", "tone": "sets"})
+        if reserved_qty > 0:
+            set_nums = list(dict.fromkeys(reserved_set_nums.get(key, [])))
+            label = "Réservé"
+            if set_nums:
+                label = f"Réservé · {', '.join(set_nums)}"
+            tones = reserved_set_tones.get(key, [])
+            badges.append(
+                {
+                    "label": label,
+                    "tone": "reserved",
+                    "set_tone": tones[0] if tones else None,
+                }
+            )
+
+        owned[key] = {
+            "part_num": row["part_num"],
+            "color_id": int(row["color_id"] or 0),
+            "part_name": row["part_name"],
+            "color_name": row["color_name"],
+            "item_type": row["item_type"] or "part",
+            "image_url": row["image_url"] or "",
+            "stock_qty": stock_qty,
+            "set_qty": set_qty,
+            "set_count": collected_set_counts.get(key, 0),
+            "reserved_qty": reserved_qty,
+            "reserved_set_count": len(
+                dict.fromkeys(reserved_set_nums.get(key, []))
+            ),
+            "total": total,
+            # Clé de compatibilité pour le rendu « ×{{ quantity }} ».
+            "quantity": total,
+            "origin": origin,
+            "badges": badges,
+            "stock_id": stock_ids.get(key),
+        }
+    return owned
+
+
+def _stock_update_response(connection, part_num, color_id):
+    """Réponse JSON d'une mise à jour du vrac : la carte d'inventaire re-rendue."""
+    part = get_owned_parts(connection).get((part_num, int(color_id)))
+    if part is None:
+        return jsonify(
+            {"removed": True, "html": "", "total": 0, "quantity": 0, "stock_id": None}
+        )
+    return jsonify(
+        {
+            "removed": False,
+            "html": render_template(
+                "_inventory_card.html",
+                part=part,
+                minifig_parts=get_minifig_parts_map(),
+            ),
+            "total": part["total"],
+            "quantity": part["stock_qty"],
+            "stock_id": part["stock_id"],
+        }
+    )
 
 
 def get_piece_groups(
@@ -754,7 +1370,7 @@ def get_piece_groups(
     copy_state = "in_gathering" if gathering_only else "in_collection"
     sql = """
         SELECT s.id AS set_id, s.set_num, s.title, s.set_image_url,
-               s.theme_name, s.in_gathering,
+               s.theme_name, s.year, s.in_gathering,
                (SELECT COUNT(*) FROM sets other
                 WHERE other.set_num = s.set_num AND other.id <= s.id
                   AND other.{copy_state} = 1) AS copy_number,
@@ -762,7 +1378,7 @@ def get_piece_groups(
                 WHERE other.set_num = s.set_num
                   AND other.{copy_state} = 1) AS copy_count,
                p.id AS part_id, p.part_num, p.part_name, p.color_id,
-               p.color_name, p.quantity, p.missing_quantity, p.image_url
+               p.color_name, p.quantity, p.missing_quantity, p.image_url, p.item_type
         FROM sets s JOIN set_parts p ON p.set_id = s.id
     """
     sql = sql.format(copy_state=copy_state)
@@ -796,6 +1412,7 @@ def get_piece_groups(
                 "color_id": row["color_id"],
                 "color_name": row["color_name"],
                 "image_url": row["image_url"],
+                "item_type": row["item_type"] or "part",
                 "quantity": 0,
                 "missing": 0,
                 "sets": [],
@@ -808,6 +1425,8 @@ def get_piece_groups(
                 "id": row["set_id"],
                 "title": row["title"],
                 "set_num": row["set_num"],
+                "theme_name": row["theme_name"],
+                "year": row["year"],
                 "copy_number": row["copy_number"],
                 "copy_count": row["copy_count"],
                 "quantity": row["quantity"],
@@ -817,11 +1436,24 @@ def get_piece_groups(
         )
 
     sort_keys = {
-        "color": lambda item: (item["color_name"].casefold(), item["part_name"].casefold()),
+        "color": lambda item: (
+            item["color_name"] == "Figurine",
+            item["color_name"].casefold(),
+            item["part_name"].casefold(),
+        ),
         "name": lambda item: (item["part_name"].casefold(), item["color_name"].casefold()),
         "missing": lambda item: (-item["missing"], item["color_name"].casefold(), item["part_name"].casefold()),
         "quantity": lambda item: (-item["quantity"], item["color_name"].casefold(), item["part_name"].casefold()),
     }
+    with database() as connection:
+        stock_map = {
+            (row["part_num"], int(row["color_id"] or 0)): int(row["quantity"])
+            for row in connection.execute(
+                "SELECT part_num, color_id, quantity FROM stock_parts"
+            ).fetchall()
+        }
+    for key, part in grouped_parts.items():
+        part["stock_qty"] = stock_map.get((key[0], int(key[1] or 0)), 0)
     parts = list(grouped_parts.values())
     if missing_only:
         parts = [part for part in parts if part["missing"] > 0]
@@ -833,6 +1465,7 @@ def get_piece_groups(
     groups = [
         {
             "name": color_name,
+            "hex": lego_color_hex(color_name),
             "parts": color_parts,
             "missing": sum(part["missing"] for part in color_parts),
             "quantity": sum(part["quantity"] for part in color_parts),
@@ -866,7 +1499,8 @@ def pieces_page():
             dict(row)
             for row in connection.execute(
                 """
-                SELECT s.id, s.set_num, s.title, s.set_image_url, s.in_collection,
+                SELECT s.id, s.set_num, s.title, s.set_image_url, s.year, s.theme_name,
+                       s.in_collection,
                        (SELECT COUNT(*) FROM sets other
                         WHERE other.set_num = s.set_num AND other.id <= s.id
                           AND other.{copy_state} = 1) AS copy_number,
@@ -894,6 +1528,7 @@ def pieces_page():
         sort_by=sort_by,
         sets_to_assemble=sets_to_assemble,
         has_api_key=bool(os.environ.get("REBRICKABLE_API_KEY", "").strip()),
+        minifig_parts_by_set=get_gathering_minifig_parts_map(),
     )
 
 
@@ -963,6 +1598,7 @@ def sets_page():
         set_count=len(sets),
         search=search,
         has_api_key=bool(os.environ.get("REBRICKABLE_API_KEY", "").strip()),
+        minifig_parts=get_minifig_parts_map(),
     )
 
 
@@ -970,60 +1606,470 @@ def sets_page():
 def inventory_page():
     search = request.args.get("q", "").strip()
     color_filter = request.args.get("color", "").strip()
-    where = ["s.in_collection = 1", "p.quantity > p.missing_quantity"]
-    params = []
-    if search:
-        where.append(
-            "(s.set_num LIKE ? OR s.title LIKE ? OR p.part_num LIKE ? "
-            "OR p.part_name LIKE ? OR p.color_name LIKE ?)"
-        )
-        params.extend([f"%{search}%"] * 5)
-    if color_filter:
-        where.append("p.color_name = ?")
-        params.append(color_filter)
-    sql = f"""
-        SELECT p.part_num, p.part_name, p.color_id, p.color_name,
-               SUM(p.quantity - p.missing_quantity) AS quantity,
-               MAX(p.image_url) AS image_url
-        FROM sets s JOIN set_parts p ON p.set_id = s.id
-        WHERE {" AND ".join(where)}
-        GROUP BY p.part_num, p.color_id, p.part_name, p.color_name
-        ORDER BY p.color_name COLLATE NOCASE, p.part_name COLLATE NOCASE,
-                 p.part_num
-    """
+    origin_filter = request.args.get("origin", "all").strip()
+    if origin_filter not in {"all", "stock", "sets", "reserved", "mixed"}:
+        origin_filter = "all"
+
     with database() as connection:
-        rows = connection.execute(sql, params).fetchall()
-        colors = [
-            row["color_name"]
-            for row in connection.execute(
-                """
-                SELECT DISTINCT p.color_name
-                FROM sets s JOIN set_parts p ON p.set_id = s.id
-                WHERE s.in_collection = 1 AND p.quantity > p.missing_quantity
-                ORDER BY p.color_name COLLATE NOCASE
-                """
-            ).fetchall()
+        owned = get_owned_parts(connection)
+
+        matched_keys = set()
+        if search:
+            like = f"%{search}%"
+            matched_keys = {
+                (row["part_num"], int(row["color_id"] or 0))
+                for row in connection.execute(
+                    """
+                    SELECT DISTINCT p.part_num, p.color_id
+                    FROM sets s JOIN set_parts p ON p.set_id = s.id
+                    WHERE s.set_num LIKE ? OR s.title LIKE ?
+                    """,
+                    (like, like),
+                ).fetchall()
+            }
+
+        stock_color_options = [
+            {"color_id": color_id, "color_name": color_name}
+            for color_id, color_name in sorted(
+                {
+                    int(row["color_id"]): row["color_name"]
+                    for row in connection.execute(
+                        """
+                        SELECT color_id, color_name FROM stock_parts
+                        UNION
+                        SELECT color_id, color_name FROM set_parts
+                        """
+                    ).fetchall()
+                }.items(),
+                key=lambda item: (item[1].casefold(), item[0]),
+            )
         ]
 
+    def matches_origin(part):
+        if origin_filter == "stock":
+            return part["stock_qty"] > 0
+        if origin_filter == "sets":
+            return part["set_qty"] > 0
+        if origin_filter == "reserved":
+            return part["reserved_qty"] > 0
+        if origin_filter == "mixed":
+            return (
+                sum(
+                    1
+                    for quantity in (
+                        part["stock_qty"],
+                        part["set_qty"],
+                        part["reserved_qty"],
+                    )
+                    if quantity > 0
+                )
+                >= 2
+            )
+        return True
+
+    needle = search.casefold()
+    parts = []
+    for part in owned.values():
+        if not matches_origin(part):
+            continue
+        if needle:
+            haystack = " ".join(
+                (part["part_num"], part["part_name"], part["color_name"])
+            ).casefold()
+            if needle not in haystack and (part["part_num"], part["color_id"]) not in matched_keys:
+                continue
+        if color_filter and part["color_name"] != color_filter:
+            continue
+        parts.append(part)
+
     color_groups = {}
-    total_quantity = 0
-    for row in rows:
+    for part in parts:
         group = color_groups.setdefault(
-            row["color_name"], {"name": row["color_name"], "parts": [], "quantity": 0}
+            part["color_name"], {"name": part["color_name"], "parts": [], "quantity": 0}
         )
-        group["parts"].append(dict(row))
-        group["quantity"] += row["quantity"]
-        total_quantity += row["quantity"]
+        group["parts"].append(part)
+        group["quantity"] += part["total"]
+
+    groups = list(color_groups.values())
+    groups.sort(key=lambda group: group["name"] == "Figurine")
+
+    colors = sorted(
+        {part["color_name"] for part in owned.values()},
+        key=lambda name: name.casefold(),
+    )
 
     return render_template(
         "inventory.html",
-        groups=list(color_groups.values()),
+        groups=groups,
         colors=colors,
         color_filter=color_filter,
         search=search,
-        total_quantity=total_quantity,
-        part_count=sum(len(group["parts"]) for group in color_groups.values()),
+        origin_filter=origin_filter,
+        total_quantity=sum(part["total"] for part in parts),
+        stock_quantity=sum(part["stock_qty"] for part in parts),
+        set_quantity=sum(part["set_qty"] for part in parts),
+        reserved_quantity=sum(part["reserved_qty"] for part in parts),
+        part_count=len(parts),
+        stock_color_options=stock_color_options,
+        minifig_parts=get_minifig_parts_map(),
     )
+
+
+@app.post("/stock")
+def add_stock_part():
+    part_num = request.form.get("part_num", "").strip()
+    part_name = request.form.get("part_name", "").strip() or part_num
+    color_name = request.form.get("color_name", "").strip() or "Unknown"
+    item_type = request.form.get("item_type", "").strip().lower() or "part"
+    if item_type not in {"part", "minifig"}:
+        item_type = "part"
+    image_url = request.form.get("image_url", "").strip()
+    raw_color_id = request.form.get("color_id", "").strip()
+    try:
+        color_id = int(raw_color_id) if raw_color_id else 0
+    except (TypeError, ValueError):
+        flash("Couleur invalide pour cette pièce du vrac.", "error")
+        return redirect(url_for("inventory_page"))
+    if color_id < 0:
+        flash("Couleur invalide pour cette pièce du vrac.", "error")
+        return redirect(url_for("inventory_page"))
+    try:
+        quantity = int(request.form.get("quantity", "0"))
+    except (TypeError, ValueError):
+        quantity = 0
+    if not part_num or quantity <= 0:
+        flash("Indiquez une référence et une quantité valide pour le vrac.", "error")
+        return redirect(url_for("inventory_page"))
+    with database() as connection:
+        connection.execute(
+            """
+            INSERT INTO stock_parts
+                (part_num, color_id, part_name, color_name, item_type, image_url, quantity)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(part_num, color_id) DO UPDATE SET
+                quantity = stock_parts.quantity + excluded.quantity,
+                part_name = excluded.part_name,
+                color_name = excluded.color_name,
+                item_type = excluded.item_type,
+                image_url = CASE WHEN excluded.image_url != ''
+                                 THEN excluded.image_url
+                                 ELSE stock_parts.image_url END
+            """,
+            (part_num, color_id, part_name, color_name, item_type, image_url, quantity),
+        )
+    if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+        with database() as connection:
+            return _stock_update_response(connection, part_num, color_id)
+    flash(f"{quantity} × {part_name} ajouté(s) au vrac.", "success")
+    return redirect(url_for("inventory_page"))
+
+
+@app.post("/stock/<int:stock_id>/adjust")
+def adjust_stock_part(stock_id):
+    with database() as connection:
+        row = connection.execute(
+            """
+            SELECT id, part_num, color_id, part_name, quantity
+            FROM stock_parts WHERE id = ?
+            """,
+            (stock_id,),
+        ).fetchone()
+    if row is None:
+        if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+            return jsonify({"error": "Cette entrée du vrac n'existe plus."}), 404
+        flash("Cette entrée du vrac n'existe plus.", "error")
+        return redirect(url_for("inventory_page"))
+    form_quantity = request.form.get("quantity")
+    if form_quantity is not None and form_quantity.strip() != "":
+        try:
+            quantity = int(form_quantity)
+            if quantity < 0:
+                raise ValueError
+        except (TypeError, ValueError):
+            if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+                return jsonify({"error": "Quantité invalide."}), 400
+            flash("Quantité invalide.", "error")
+            return redirect(url_for("inventory_page"))
+    else:
+        try:
+            change = int(request.form.get("change", "0"))
+        except (TypeError, ValueError):
+            change = 0
+        quantity = row["quantity"] + change
+    if quantity <= 0:
+        with database() as connection:
+            connection.execute("DELETE FROM stock_parts WHERE id = ?", (stock_id,))
+            if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+                return _stock_update_response(
+                    connection, row["part_num"], row["color_id"]
+                )
+        flash(f"{row['part_name']} retiré du vrac.", "success")
+        return redirect(url_for("inventory_page"))
+    with database() as connection:
+        connection.execute(
+            "UPDATE stock_parts SET quantity = ? WHERE id = ?",
+            (quantity, stock_id),
+        )
+    if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+        with database() as connection:
+            return _stock_update_response(
+                connection, row["part_num"], row["color_id"]
+            )
+    flash(f"{row['part_name']} : {quantity} dans le vrac.", "success")
+    return redirect(url_for("inventory_page"))
+
+
+@app.post("/stock/<int:stock_id>/delete")
+def delete_stock_part(stock_id):
+    with database() as connection:
+        row = connection.execute(
+            "SELECT part_name, part_num, color_id FROM stock_parts WHERE id = ?",
+            (stock_id,),
+        ).fetchone()
+        if row is None:
+            if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+                return jsonify({"error": "Cette entrée du vrac n'existe plus."}), 404
+            flash("Cette entrée du vrac n'existe plus.", "error")
+            return redirect(url_for("inventory_page"))
+        connection.execute("DELETE FROM stock_parts WHERE id = ?", (stock_id,))
+        if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+            return _stock_update_response(connection, row["part_num"], row["color_id"])
+    flash(f"{row['part_name']} retiré du vrac.", "success")
+    return redirect(url_for("inventory_page"))
+
+
+@app.post("/pieces/take-stock")
+def take_stock_for_part():
+    part_num = request.form.get("part_num", "")
+    try:
+        color_id = int(request.form.get("color_id", ""))
+    except ValueError:
+        flash("Pièce invalide.", "error")
+        return redirect(url_for("pieces_page"))
+    ajax = request.headers.get("X-Requested-With") == "XMLHttpRequest"
+    updates = []
+    taken = 0
+    available = 0
+    with database() as connection:
+        stock = connection.execute(
+            "SELECT id, quantity FROM stock_parts WHERE part_num = ? AND color_id = ?",
+            (part_num, color_id),
+        ).fetchone()
+        if stock is not None and stock["quantity"] > 0:
+            rows = connection.execute(
+                """
+                SELECT sp.id, sp.missing_quantity, sp.item_type
+                FROM set_parts sp JOIN sets s ON s.id = sp.set_id
+                WHERE sp.part_num = ? AND sp.color_id = ? AND s.in_gathering = 1
+                  AND sp.missing_quantity > 0
+                ORDER BY s.created_at, s.id
+                """,
+                (part_num, color_id),
+            ).fetchall()
+            available = stock["quantity"]
+            for row in rows:
+                take = min(row["missing_quantity"], available)
+                if take <= 0:
+                    break
+                connection.execute(
+                    "UPDATE set_parts SET missing_quantity = ? WHERE id = ?",
+                    (row["missing_quantity"] - take, row["id"]),
+                )
+                sync_minifig_components_from_parent(
+                    connection, row["id"], row["missing_quantity"]
+                )
+                updates.append(
+                    {
+                        "part_id": row["id"],
+                        "missing": row["missing_quantity"] - take,
+                        "item_type": row["item_type"],
+                    }
+                )
+                available -= take
+                taken += take
+            if taken:
+                if available <= 0:
+                    connection.execute(
+                        "DELETE FROM stock_parts WHERE id = ?", (stock["id"],)
+                    )
+                else:
+                    connection.execute(
+                        "UPDATE stock_parts SET quantity = ? WHERE id = ?",
+                        (available, stock["id"]),
+                    )
+    if ajax:
+        if not taken:
+            return jsonify({"error": "Aucune pièce du vrac à utiliser pour cette référence."}), 400
+        return jsonify({"taken": taken, "stock_qty": available, "updates": updates})
+    if taken:
+        flash(f"{taken} pièce{'s' if taken > 1 else ''} prise{'s' if taken > 1 else ''} dans le vrac.", "success")
+    else:
+        flash("Aucune pièce du vrac à utiliser pour cette référence.", "error")
+    return redirect(url_for("pieces_page"))
+
+
+@app.post("/sets/<int:set_id>/take-stock")
+def take_stock_for_set(set_id):
+    return_to = request.form.get("return_to", "")
+    with database() as connection:
+        rows = connection.execute(
+            """
+            SELECT sp.id AS sp_id, sp.missing_quantity,
+                   st.id AS stock_id, st.quantity AS stock_quantity
+            FROM set_parts sp
+            JOIN sets s ON s.id = sp.set_id
+            JOIN stock_parts st
+              ON st.part_num = sp.part_num AND st.color_id = sp.color_id
+            WHERE sp.set_id = ? AND s.in_gathering = 1
+              AND sp.missing_quantity > 0 AND st.quantity > 0
+            """,
+            (set_id,),
+        ).fetchall()
+        taken = 0
+        for row in rows:
+            take = min(row["missing_quantity"], row["stock_quantity"])
+            if take <= 0:
+                continue
+            taken += take
+            connection.execute(
+                "UPDATE set_parts SET missing_quantity = ? WHERE id = ?",
+                (row["missing_quantity"] - take, row["sp_id"]),
+            )
+            sync_minifig_components_from_parent(
+                connection, row["sp_id"], row["missing_quantity"]
+            )
+            remaining = row["stock_quantity"] - take
+            if remaining <= 0:
+                connection.execute(
+                    "DELETE FROM stock_parts WHERE id = ?", (row["stock_id"],)
+                )
+            else:
+                connection.execute(
+                    "UPDATE stock_parts SET quantity = ? WHERE id = ?",
+                    (remaining, row["stock_id"]),
+                )
+    if taken > 0:
+        flash(
+            f"{taken} pièce{'s' if taken > 1 else ''} "
+            f"prise{'s' if taken > 1 else ''} "
+            "dans le vrac.",
+            "success",
+        )
+    else:
+        flash(
+            "Aucune pièce du vrac ne correspond aux pièces manquantes de ce set.",
+            "error",
+        )
+    if return_to == "verify":
+        with database() as connection:
+            set_row = connection.execute(
+                "SELECT set_num FROM sets WHERE id = ?", (set_id,)
+            ).fetchone()
+        if set_row is not None and set_row["set_num"]:
+            return redirect(url_for("verify_set_page", set_num=set_row["set_num"]))
+        return redirect(url_for("inventory_page"))
+    if return_to == "pieces":
+        return redirect(url_for("pieces_page"))
+    return redirect(url_for("inventory_page"))
+
+
+@app.get("/inventaire/verifier")
+def verify_set_page():
+    raw_set_num = request.args.get("set_num", "").strip()
+    context = {
+        "set_num": raw_set_num,
+        "rows": [],
+        "summary": None,
+        "error": None,
+        "existing_set_id": None,
+        "has_api_key": bool(os.environ.get("REBRICKABLE_API_KEY", "").strip()),
+        "set_info": None,
+        "checked": False,
+        "minifig_parts": get_minifig_parts_map(),
+    }
+    if not raw_set_num:
+        return render_template("verify_set.html", **context)
+
+    set_num = raw_set_num
+    if "-" not in set_num:
+        set_num = f"{set_num}-1"
+    if not re.fullmatch(r"[A-Za-z0-9]+(?:-[A-Za-z0-9]+)?", set_num):
+        context["error"] = f"Numéro de set invalide : {raw_set_num}."
+        return render_template("verify_set.html", **context)
+
+    context["set_num"] = set_num
+    if not context["has_api_key"]:
+        context["error"] = "Configurez REBRICKABLE_API_KEY pour vérifier un set."
+        return render_template("verify_set.html", **context)
+
+    try:
+        set_info, api_parts = fetch_set_inventory(set_num)
+    except (RuntimeError, ValueError) as error:
+        context["error"] = str(error)
+        return render_template("verify_set.html", **context)
+
+    with database() as connection:
+        owned = get_owned_parts(connection)
+        stock = {key: part["stock_qty"] for key, part in owned.items()}
+        in_sets = {
+            key: part["set_qty"] + part["reserved_qty"]
+            for key, part in owned.items()
+        }
+        existing_row = connection.execute(
+            """
+            SELECT id FROM sets
+            WHERE set_num = ? AND in_gathering = 1
+            ORDER BY id LIMIT 1
+            """,
+            (set_num,),
+        ).fetchone()
+
+    rows = []
+    for part in api_parts:
+        needed = int(part.get("quantity") or 0)
+        if needed <= 0:
+            continue
+        key = (str(part.get("part_num") or ""), int(part.get("color_id") or 0))
+        stock_qty = stock.get(key, 0)
+        sets_qty = in_sets.get(key, 0)
+        take = min(needed, stock_qty)
+        from_sets = min(sets_qty, needed - take)
+        to_buy = max(0, needed - stock_qty - sets_qty)
+        rows.append(
+            {
+                "part_num": part.get("part_num") or "",
+                "part_name": part.get("part_name") or part.get("part_num") or "",
+                "color_id": key[1],
+                "color_name": part.get("color_name") or "Unknown",
+                "item_type": part.get("item_type") or "part",
+                "image_url": part.get("image_url") or "",
+                "needed": needed,
+                "stock": stock_qty,
+                "in_sets": from_sets,
+                "take": take,
+                "to_buy": to_buy,
+            }
+        )
+    rows.sort(
+        key=lambda row: (row["color_name"].casefold(), row["part_name"].casefold())
+    )
+
+    summary = {
+        "needed": sum(row["needed"] for row in rows),
+        "from_stock": sum(row["take"] for row in rows),
+        "from_sets": sum(row["in_sets"] for row in rows),
+        "to_buy": sum(row["to_buy"] for row in rows),
+    }
+    summary["complete"] = summary["to_buy"] == 0
+
+    context.update(
+        rows=rows,
+        summary=summary,
+        set_info=set_info,
+        existing_set_id=existing_row["id"] if existing_row else None,
+        checked=True,
+    )
+    return render_template("verify_set.html", **context)
 
 
 @app.post("/sets/<int:set_id>/refresh-image")
@@ -1105,6 +2151,110 @@ def refresh_set_theme(set_id):
     return redirect(url_for("sets_page"))
 
 
+@app.post("/sets/<int:set_id>/refresh-inventory")
+def refresh_set_inventory(set_id):
+    destination = {
+        "sets": "sets_page",
+    }.get(request.form.get("return_to"), "pieces_page")
+    if not os.environ.get("REBRICKABLE_API_KEY", "").strip():
+        flash("Ajoute une clé API Rebrickable pour actualiser l'inventaire.", "error")
+        return redirect(url_for(destination))
+    with database() as connection:
+        set_row = connection.execute(
+            "SELECT set_num, all_parts_found FROM sets WHERE id = ?", (set_id,)
+        ).fetchone()
+    if set_row is None:
+        flash("Ce set n'existe plus.", "error")
+        return redirect(url_for(destination))
+    try:
+        _, parts = fetch_set_inventory(set_row["set_num"])
+    except (RuntimeError, ValueError) as error:
+        flash(str(error), "error")
+        return redirect(url_for(destination))
+
+    try:
+        minifig_rows = fetch_minifig_parts_for_set(set_row["set_num"])
+    except (RuntimeError, ValueError):
+        minifig_rows = None
+
+    with database() as connection:
+        previous_figure_quantities = {
+            row["part_num"]: row["quantity"]
+            for row in connection.execute(
+                """
+                SELECT part_num, quantity FROM set_parts
+                WHERE set_id = ? AND item_type = 'minifig'
+                """,
+                (set_id,),
+            ).fetchall()
+        }
+        previous_missing = {
+            (row["part_num"], row["color_id"]): row["missing_quantity"]
+            for row in connection.execute(
+                "SELECT part_num, color_id, missing_quantity FROM set_parts WHERE set_id = ?",
+                (set_id,),
+            ).fetchall()
+        }
+        merged = {}
+        for part in parts:
+            quantity = int(part.get("quantity") or 0)
+            key = (str(part.get("part_num") or ""), int(part.get("color_id") or 0))
+            if not key[0] or quantity <= 0:
+                continue
+            if key in merged:
+                merged[key]["quantity"] += quantity
+                continue
+            merged[key] = {
+                "set_id": set_id,
+                "part_num": key[0],
+                "part_name": part.get("part_name") or key[0],
+                "color_id": key[1],
+                "color_name": part.get("color_name") or "Unknown",
+                "quantity": quantity,
+                "image_url": part.get("image_url") or "",
+                "item_type": part.get("item_type", "part"),
+            }
+        for item in merged.values():
+            key = (item["part_num"], item["color_id"])
+            previous = previous_missing.get(key)
+            if previous is None:
+                item["missing_quantity"] = (
+                    0 if set_row["all_parts_found"] else item["quantity"]
+                )
+            else:
+                item["missing_quantity"] = min(previous, item["quantity"])
+        if not merged:
+            flash(
+                "Inventaire introuvable : aucune pièce n'a été renvoyée par Rebrickable.",
+                "error",
+            )
+            return redirect(url_for(destination))
+        connection.execute("DELETE FROM set_parts WHERE set_id = ?", (set_id,))
+        connection.executemany(
+            """
+            INSERT INTO set_parts
+                (set_id, part_num, part_name, color_id, color_name, quantity, missing_quantity, image_url, item_type)
+            VALUES
+                (:set_id, :part_num, :part_name, :color_id, :color_name, :quantity, :missing_quantity, :image_url, :item_type)
+            """,
+            list(merged.values()),
+        )
+        if minifig_rows is not None:
+            replace_set_minifig_parts(
+                connection,
+                set_id,
+                minifig_rows,
+                all_parts_found=bool(set_row["all_parts_found"]),
+                previous_figure_quantities=previous_figure_quantities,
+            )
+    count = len(merged)
+    flash(
+        f"Inventaire actualisé : {count} référence{'s' if count != 1 else ''}.",
+        "success",
+    )
+    return redirect(url_for(destination))
+
+
 @app.get("/manquantes")
 def missing_page():
     search = request.args.get("q", "").strip()
@@ -1122,6 +2272,7 @@ def missing_page():
         search=search,
         color_filter=color_filter,
         sort_by=sort_by,
+        minifig_parts=get_minifig_parts_map(),
     )
 
 
@@ -1161,6 +2312,13 @@ def add_set():
     else:
         title = title or f"Set {set_num}"
 
+    minifig_rows = []
+    if os.environ.get("REBRICKABLE_API_KEY", "").strip():
+        try:
+            minifig_rows = fetch_minifig_parts_for_set(set_num)
+        except (RuntimeError, ValueError):
+            minifig_rows = []
+
     with database() as connection:
         cursor = connection.execute(
             """
@@ -1185,18 +2343,26 @@ def add_set():
                 part,
                 set_id=set_id,
                 missing_quantity=0 if all_parts_found else part["quantity"],
+                item_type=part.get("item_type", "part"),
             )
             for part in parts
         ]
         connection.executemany(
             """
             INSERT INTO set_parts
-                (set_id, part_num, part_name, color_id, color_name, quantity, missing_quantity, image_url)
+                (set_id, part_num, part_name, color_id, color_name, quantity, missing_quantity, image_url, item_type)
             VALUES
-                (:set_id, :part_num, :part_name, :color_id, :color_name, :quantity, :missing_quantity, :image_url)
+                (:set_id, :part_num, :part_name, :color_id, :color_name, :quantity, :missing_quantity, :image_url, :item_type)
             """,
             imported_parts,
         )
+        if minifig_rows:
+            replace_set_minifig_parts(
+                connection,
+                set_id,
+                minifig_rows,
+                all_parts_found=all_parts_found,
+            )
 
     if parts:
         message = f"{title} ajouté avec {len(parts)} références de pièces importées."
@@ -1324,10 +2490,24 @@ def duplicate_set(set_id):
             """
             INSERT INTO set_parts
                 (set_id, part_num, part_name, color_id, color_name,
-                 quantity, missing_quantity, image_url)
+                 quantity, missing_quantity, image_url, item_type)
             SELECT ?, part_num, part_name, color_id, color_name,
-                   quantity, quantity, image_url
+                   quantity, quantity, image_url, item_type
             FROM set_parts WHERE set_id = ?
+            """,
+            (new_set_id, set_id),
+        )
+        connection.execute(
+            """
+            INSERT INTO minifig_parts
+                (set_id, fig_num, part_num, part_name, color_id, color_name,
+                 quantity, missing_quantity, image_url)
+            SELECT ?, mp.fig_num, mp.part_num, mp.part_name, mp.color_id, mp.color_name,
+                   mp.quantity, mp.quantity * COALESCE(p.quantity, 1), mp.image_url
+            FROM minifig_parts mp
+            LEFT JOIN set_parts p ON p.set_id = mp.set_id
+                AND p.part_num = mp.fig_num AND p.item_type = 'minifig'
+            WHERE mp.set_id = ?
             """,
             (new_set_id, set_id),
         )
@@ -1366,6 +2546,10 @@ def complete_set_parts(set_id):
                 (set_id,),
             )
             connection.execute(
+                "UPDATE minifig_parts SET missing_quantity = 0 WHERE set_id = ?",
+                (set_id,),
+            )
+            connection.execute(
                 "UPDATE sets SET in_gathering = 0 WHERE id = ? AND in_collection = 1",
                 (set_id,),
             )
@@ -1373,6 +2557,18 @@ def complete_set_parts(set_id):
         else:
             connection.execute(
                 "UPDATE set_parts SET missing_quantity = quantity WHERE set_id = ?",
+                (set_id,),
+            )
+            connection.execute(
+                """
+                UPDATE minifig_parts
+                SET missing_quantity = quantity * COALESCE(
+                    (SELECT p.quantity FROM set_parts p
+                     WHERE p.set_id = minifig_parts.set_id
+                       AND p.part_num = minifig_parts.fig_num
+                       AND p.item_type = 'minifig'), 1)
+                WHERE set_id = ?
+                """,
                 (set_id,),
             )
             connection.execute(
@@ -1497,6 +2693,9 @@ def update_missing(part_id):
 
     response_data = None
     with database() as connection:
+        previous = connection.execute(
+            "SELECT missing_quantity FROM set_parts WHERE id = ?", (part_id,)
+        ).fetchone()
         if change is not None:
             cursor = connection.execute(
                 """
@@ -1510,6 +2709,10 @@ def update_missing(part_id):
             cursor = connection.execute(
                 "UPDATE set_parts SET missing_quantity = MIN(?, quantity) WHERE id = ?",
                 (missing, part_id),
+            )
+        if cursor.rowcount and previous:
+            sync_minifig_components_from_parent(
+                connection, part_id, previous["missing_quantity"]
             )
         if cursor.rowcount == 0:
             if request.headers.get("X-Requested-With") == "XMLHttpRequest":
@@ -1591,9 +2794,81 @@ def update_missing(part_id):
     return redirect(url_for(destination))
 
 
+@app.post("/minifig-parts/<int:part_id>/status")
+def update_minifig_part_status(part_id):
+    status = request.form.get("status")
+    change = request.form.get("change")
+    mark_complete = request.form.get("mark_complete") == "1"
+    is_ajax = request.headers.get("X-Requested-With") == "XMLHttpRequest"
+    if not (
+        (status in {"found", "missing"} and change is None and not mark_complete)
+        or (change in {"-1", "1"} and status is None and not mark_complete)
+        or (mark_complete and status is None and change is None)
+    ):
+        message = "La modification de la pièce est invalide."
+        if is_ajax:
+            return jsonify({"error": message}), 400
+        flash(message, "error")
+        return redirect(url_for("pieces_page"))
+
+    with database() as connection:
+        part = connection.execute(
+            """
+            SELECT mp.id, mp.set_id, mp.fig_num, mp.part_name, mp.missing_quantity,
+                   mp.quantity * p.quantity AS quantity
+            FROM minifig_parts mp
+            JOIN set_parts p ON p.set_id = mp.set_id AND p.part_num = mp.fig_num
+                AND p.item_type = 'minifig'
+            WHERE mp.id = ?
+            """,
+            (part_id,),
+        ).fetchone()
+        if part is not None:
+            if change is not None:
+                missing = min(part["quantity"], max(0, part["missing_quantity"] + int(change)))
+            elif status == "missing":
+                missing = part["quantity"]
+            else:
+                missing = 0
+            connection.execute(
+                "UPDATE minifig_parts SET missing_quantity = ? WHERE id = ?",
+                (missing, part_id),
+            )
+            sync_minifig_parent_from_components(connection, part["set_id"], part["fig_num"])
+            connection.execute(
+                """
+                UPDATE sets SET in_gathering = 0
+                WHERE id = ? AND in_collection = 1 AND in_gathering = 1
+                  AND NOT EXISTS (
+                      SELECT 1 FROM set_parts
+                      WHERE set_id = sets.id AND missing_quantity > 0
+                  )
+                """,
+                (part["set_id"],),
+            )
+
+    if part is None:
+        message = "Cette pièce de figurine n'existe plus."
+        if is_ajax:
+            return jsonify({"error": message}), 404
+        flash(message, "error")
+        return redirect(url_for("pieces_page"))
+    if is_ajax:
+        return jsonify(
+            {
+                "part_name": part["part_name"],
+                "quantity": part["quantity"],
+                "missing_quantity": missing,
+            }
+        )
+    flash("Statut de la pièce de figurine mis à jour.", "success")
+    return redirect(url_for("pieces_page"))
+
+
 @app.post("/sets/<int:set_id>/delete")
 def delete_set(set_id):
     with database() as connection:
+        connection.execute("DELETE FROM minifig_parts WHERE set_id = ?", (set_id,))
         connection.execute("DELETE FROM sets WHERE id = ?", (set_id,))
     flash("Set supprimé de la liste à réunir ou de Mes sets.", "success")
     destination = {
@@ -1611,6 +2886,7 @@ def get_export_quantities(owned):
             SELECT p.part_num, p.color_id, p.missing_quantity
             FROM sets s JOIN set_parts p ON p.set_id = s.id
             WHERE p.missing_quantity > 0 AND s.{status_column} = 1
+                  AND p.item_type = 'part'
             ORDER BY p.part_num, p.color_id
             """
         ).fetchall()
