@@ -1,14 +1,13 @@
 <div class="alloc-row alloc-stock" data-stock-id="{{ part.stock_id or '' }}">
   <span class="alloc-label">vrac</span>
   <div class="stock-stepper">
+    <span class="stock-qty" aria-label="{{ part.stock_qty }} pièce{{ 's' if part.stock_qty != 1 else '' }} en vrac">{{ part.stock_qty }}</span>
+    <span class="stock-buttons">
     {% if part.stock_id %}
       <form action="{{ url_for('adjust_stock_part', stock_id=part.stock_id) }}" method="post" class="stock-step-form"><button class="set-step-button" name="change" value="-1" title="Retirer une pièce du vrac" aria-label="Retirer une pièce du vrac">−</button></form>
-      <span class="stock-qty">{{ part.stock_qty }}</span>
       <form action="{{ url_for('adjust_stock_part', stock_id=part.stock_id) }}" method="post" class="stock-step-form"><button class="set-step-button" name="change" value="1" title="Ajouter une pièce au vrac" aria-label="Ajouter une pièce au vrac">+</button></form>
-      <form action="{{ url_for('delete_stock_part', stock_id=part.stock_id) }}" method="post" class="stock-delete-form"><button class="stock-delete" type="submit" title="Retirer du vrac" aria-label="Retirer {{ part.part_name }} du vrac">×</button></form>
     {% else %}
-      <button class="set-step-button" disabled>−</button>
-      <span class="stock-qty">0</span>
+      <button class="set-step-button" type="button" disabled aria-label="Retirer une pièce du vrac">−</button>
       <form action="{{ url_for('add_stock_part') }}" method="post" class="stock-add-form">
         <input type="hidden" name="part_num" value="{{ part.part_num }}">
         <input type="hidden" name="part_name" value="{{ part.part_name }}">
@@ -20,5 +19,6 @@
         <button class="set-step-button" type="submit" title="Ajouter au vrac" aria-label="Ajouter {{ part.part_name }} au vrac">+</button>
       </form>
     {% endif %}
+    </span>
   </div>
 </div>

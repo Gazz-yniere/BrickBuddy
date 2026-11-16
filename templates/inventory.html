@@ -67,8 +67,9 @@
     <p class="origin-legend"><strong>En vrac</strong> = pièces détachées disponibles · <strong>Dans un set</strong> = rangées dans un set de ta collection · <strong>Réservé · XXXXX-X</strong> = mises de côté pour un set encore à réunir</p>
     <div class="inventory-colors">
       {% for group in groups %}
+        {% set color_hex = group.name|lego_color_hex %}
         <details class="color-card inventory-color" open>
-          <summary class="color-header">
+          <summary class="color-header"{% if color_hex %} style="--brick: {{ color_hex }}"{% endif %}>
             <span class="color-swatch {{ 'swatch-' ~ group.name|lower|replace(' ', '-') }}" title="{{ group.name }}"></span>
             <div class="color-heading"><h3>{{ group.name }}</h3><span>{{ group.parts|length }} référence{{ 's' if group.parts|length != 1 else '' }}</span></div>
             <span class="color-totals"><strong>{{ group.quantity }}</strong><span>pièces</span></span>

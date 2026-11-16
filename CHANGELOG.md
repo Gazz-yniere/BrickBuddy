@@ -2,6 +2,28 @@
 
 Les changements notables apportés à Brick Buddy sont consignés ici.
 
+## 1.0.2
+
+### Modifié
+
+- Dans « Mes sets », les pièces sont regroupées par couleur dans des sections
+  repliables, avec une grille de sept pièces par ligne sur grand écran, des
+  images de 100 pixels et un compteur « manquantes / total ».
+- Les noms et les références longues sont tronqués avec leur texte complet
+  accessible au survol. Les en-têtes de couleur de « Mes sets » et de
+  l'inventaire reprennent les dégradés de l'application.
+- Les commandes de suivi sont alignées à droite dans « Mes sets » ; le bouton
+  de suppression du vrac a été retiré au profit des boutons `−` et `+`.
+- La démonstration GitHub Pages intègre l'inventaire du set 75193-1 et les
+  composants de Chewbacca, avec la grille par couleur et les commandes de
+  suivi et de vrac. Les images du set et des pièces sont fournies localement
+  depuis Rebrickable ; les états de suivi et le vrac sont fictifs et non persistés.
+
+### Corrigé
+
+- Les modifications des pièces de figurines mettent à jour les compteurs sans
+  recharger toute la page ni les images.
+
 ## 1.0.1
 
 ### Ajouté

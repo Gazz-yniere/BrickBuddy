@@ -55,25 +55,37 @@
           </summary>
           <div class="collection-set-content">
             {% if set.parts %}
-              <div class="set-part-list">
-                {% for part in set.parts %}
+              {% for color in set.parts|groupby('color_name') %}
+              {% set color_hex = color.grouper|lego_color_hex %}
+              <details class="collection-color-group" open>
+                <summary class="collection-color-header"{% if color_hex %} style="--brick: {{ color_hex }}"{% endif %}>
+                  <span class="color-swatch {{ 'swatch-' ~ color.grouper|lower|replace(' ', '-') }}" aria-hidden="true"></span>
+                  <strong>{{ color.grouper or 'Couleur inconnue' }}</strong>
+                  <span>{{ color.list|length }} référence{{ 's' if color.list|length != 1 else '' }}</span>
+                  <span class="collection-color-chevron" aria-hidden="true">⌄</span>
+                </summary>
+                <div class="set-part-list">
+                {% for part in color.list %}
                   <article class="collection-part-card {{ 'part-done' if part.missing_quantity == 0 else '' }}">
                     {% if part.image_url %}<img class="collection-part-image" src="{{ part.image_url|local_image_url }}" alt="{{ part.part_name }}" loading="lazy">{% else %}<div class="collection-part-image part-placeholder">▦</div>{% endif %}
-                    <div class="collection-part-copy"><strong>{{ part.part_name }}</strong><span>Réf. {{ part.part_num }} · {{ part.color_name }}</span><small>×{{ part.quantity }} dans le set</small></div>
+                    <div class="collection-part-copy"><strong title="{{ part.part_name }}">{{ part.part_name }}</strong><span title="Réf. {{ part.part_num }} · {{ part.color_name }}">Réf. {{ part.part_num }} · {{ part.color_name }}</span></div>
                     <form class="set-status-form collection-part-controls {{ 'is-complete' if part.missing_quantity == 0 else '' }}" action="{{ url_for('update_missing', part_id=part.part_id) }}" method="post" data-set-id="{{ set.id }}" data-quantity="{{ part.quantity }}">
                       <input type="hidden" name="return_to" value="sets">
-                      <span class="set-missing-count" aria-label="{{ part.missing_quantity }} pièce{{ 's' if part.missing_quantity != 1 else '' }} manquante{{ 's' if part.missing_quantity != 1 else '' }}">{{ part.missing_quantity }}</span>
-                      <span class="collection-missing-label">à trouver</span>
-                      <button class="set-complete-part" type="submit" name="mark_complete" value="1" title="Tout trouvé" aria-label="Marquer toutes les pièces de {{ part.part_name }} comme trouvées" {{ 'disabled' if part.missing_quantity == 0 else '' }}>
-                        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m5 12 4 4L19 6"/></svg>
-                      </button>
-                      <button class="set-step-button" type="submit" name="change" value="-1" aria-label="Marquer une pièce trouvée de {{ part.part_name }}" title="Une pièce trouvée" {{ 'disabled' if part.missing_quantity == 0 else '' }}>−</button>
-                      <button class="set-step-button" type="submit" name="change" value="1" aria-label="Marquer une pièce manquante de {{ part.part_name }}" title="Une pièce manquante" {{ 'disabled' if part.missing_quantity == part.quantity else '' }}>+</button>
+                      <span class="collection-part-count" aria-label="{{ part.missing_quantity }} pièce{{ 's' if part.missing_quantity != 1 else '' }} manquante{{ 's' if part.missing_quantity != 1 else '' }} sur {{ part.quantity }}"><span class="set-missing-count">{{ part.missing_quantity }}</span><span class="part-total">/{{ part.quantity }}</span></span>
+                      <span class="collection-part-buttons">
+                        <button class="set-complete-part" type="submit" name="mark_complete" value="1" title="Tout trouvé" aria-label="Marquer toutes les pièces de {{ part.part_name }} comme trouvées" {{ 'disabled' if part.missing_quantity == 0 else '' }}>
+                          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m5 12 4 4L19 6"/></svg>
+                        </button>
+                        <button class="set-step-button" type="submit" name="change" value="-1" aria-label="Marquer une pièce trouvée de {{ part.part_name }}" title="Une pièce trouvée" {{ 'disabled' if part.missing_quantity == 0 else '' }}>−</button>
+                        <button class="set-step-button" type="submit" name="change" value="1" aria-label="Marquer une pièce manquante de {{ part.part_name }}" title="Une pièce manquante" {{ 'disabled' if part.missing_quantity == part.quantity else '' }}>+</button>
+                      </span>
                     </form>
                     {% if part.item_type == 'minifig' %}{{ minifig_ui.render(part.part_num, minifig_parts) }}{% endif %}
                   </article>
                 {% endfor %}
-              </div>
+                </div>
+              </details>
+              {% endfor %}
             {% else %}<div class="empty-parts"><span>🧩</span><div><strong>Pas encore de pièces enregistrées</strong><small>Ajoute les pièces manuellement pour les retrouver dans la liste commune.</small></div></div>{% endif %}
             {% with return_to='sets' %}{% include '_manual_add.html' %}{% endwith %}
           </div>

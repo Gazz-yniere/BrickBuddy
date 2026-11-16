@@ -89,17 +89,29 @@ document.addEventListener("submit", async (event) => {
     if (!response.ok) {
       throw new Error(result.error || "La quantité n'a pas pu être mise à jour.");
     }
-    if (form.hasAttribute("data-minifig-parent")) {
-      reloadMinifigTracking();
-      return;
+    if (result.components) {
+      for (const component of result.components) {
+        const componentForm = document.querySelector(
+          `.minifig-part-status-form[action$="/minifig-parts/${component.id}/status"]`,
+        );
+        if (componentForm) {
+          updateMinifigComponent(componentForm, component.missing_quantity);
+        }
+      }
     }
 
     const isComplete = result.missing === 0;
-    form.querySelector(".set-missing-count").textContent = result.missing;
-    form.setAttribute(
-      "aria-label",
-      `${result.missing} pièce${result.missing === 1 ? "" : "s"} manquante${result.missing === 1 ? "" : "s"}`,
-    );
+    const missingCount = form.querySelector(".set-missing-count");
+    missingCount.textContent = result.missing;
+    const missingLabel = `${result.missing} pièce${result.missing === 1 ? "" : "s"} manquante${result.missing === 1 ? "" : "s"}`;
+    form.setAttribute("aria-label", missingLabel);
+    if (missingCount.hasAttribute("aria-label")) {
+      missingCount.setAttribute("aria-label", missingLabel);
+    }
+    const collectionCount = form.querySelector(".collection-part-count");
+    if (collectionCount) {
+      collectionCount.setAttribute("aria-label", `${missingLabel} sur ${result.quantity}`);
+    }
     form.classList.toggle("is-complete", isComplete);
     form.closest(".collection-part-card")?.classList.toggle("part-done", isComplete);
     form.querySelector('button[name="change"][value="-1"]').disabled = isComplete;
@@ -111,43 +123,8 @@ document.addEventListener("submit", async (event) => {
     }
 
     const pieceCard = form.closest(".piece-card");
-    if (result.gathering_complete) {
-      document
-        .querySelectorAll(`.set-status-form[data-set-id="${result.set_id}"]`)
-        .forEach((setForm) => {
-          const card = setForm.closest(".piece-card");
-          const colorGroup = card?.closest("[data-color-group]");
-          const setQuantity = Number(setForm.dataset.quantity) || 0;
-          setForm.remove();
-          if (!card) {
-            return;
-          }
-          const missing = [...card.querySelectorAll(".set-status-form .set-missing-count")]
-            .reduce((total, count) => total + Number(count.textContent), 0);
-          const partMissingTotal = card.querySelector(".part-missing-total");
-          const total = partMissingTotal?.querySelector("strong");
-          if (total) {
-            total.textContent = String(missing);
-            total.classList.toggle("accent-found", missing === 0);
-            total.classList.toggle("accent-missing", missing > 0);
-          }
-          if (partMissingTotal) {
-            const remaining = Math.max(0, Number(partMissingTotal.dataset.quantity || 0) - setQuantity);
-            partMissingTotal.dataset.quantity = String(remaining);
-            const partTotal = partMissingTotal.querySelector(".part-total");
-            if (partTotal) {
-              partTotal.textContent = `/${remaining}`;
-            }
-          }
-          card.classList.toggle("is-found", missing === 0);
-          if (!card.querySelector(".set-status-form")) {
-            card.remove();
-          }
-          updateColorGroup(colorGroup);
-        });
-      document
-        .querySelector(`.candidate-grid .set-card[data-set-id="${result.set_id}"]`)
-        ?.remove();
+    if (result.gathering_complete && pieceCard) {
+      removeCompletedGatheringSet(result.set_id);
     } else if (pieceCard) {
       const partTotal = pieceCard.querySelector(".part-missing-total strong");
       partTotal.textContent = result.part_missing;
@@ -217,6 +194,58 @@ function updateStockHint(card) {
     `Vrac : ${stock} ${stock >= missing ? "· suffisant" : `· insuffisant (${missing} requis)`}`;
 }
 
+function removeCompletedGatheringSet(setId) {
+  document.querySelectorAll(`.set-status-form[data-set-id="${setId}"]`).forEach((setForm) => {
+    const card = setForm.closest(".piece-card");
+    const colorGroup = card?.closest("[data-color-group]");
+    const setQuantity = Number(setForm.dataset.quantity) || 0;
+    setForm.remove();
+    if (!card) {
+      return;
+    }
+    card.querySelectorAll(`.minifig-parts[data-minifig-set="${setId}"]`).forEach((details) => details.remove());
+    const partMissingTotal = card.querySelector(".part-missing-total");
+    if (partMissingTotal) {
+      const remaining = Math.max(0, Number(partMissingTotal.dataset.quantity || 0) - setQuantity);
+      partMissingTotal.dataset.quantity = String(remaining);
+      partMissingTotal.querySelector(".part-total").textContent = `/${remaining}`;
+    }
+    if (!card.querySelector(".set-status-form")) {
+      card.remove();
+      updateColorGroup(colorGroup);
+    } else {
+      refreshPieceCard(card);
+    }
+  });
+  document.querySelector(`.candidate-grid .set-card[data-set-id="${setId}"]`)?.remove();
+  const setCount = document.querySelector("[data-gathering-set-count]");
+  if (setCount) {
+    setCount.textContent = document.querySelectorAll(".candidate-grid .set-card").length;
+  }
+  const summary = document.querySelector("[data-gathering-part-summary]");
+  if (summary) {
+    const partCount = document.querySelectorAll(".color-groups .piece-card").length;
+    const colorCount = document.querySelectorAll(".color-groups [data-color-group]").length;
+    summary.textContent = `${partCount} référence${partCount === 1 ? "" : "s"} · ${colorCount} couleur${colorCount === 1 ? "" : "s"}`;
+  }
+}
+
+function updateMinifigComponent(form, missing) {
+  const component = form.closest(".minifig-part");
+  const quantity = Number(form.dataset.quantity);
+  const isComplete = missing === 0;
+  form.querySelector(".set-missing-count").textContent = missing;
+  form.classList.toggle("is-complete", isComplete);
+  component.classList.toggle("is-found", isComplete);
+  const total = component.querySelector(".minifig-part-missing-total strong");
+  total.textContent = missing;
+  total.classList.toggle("accent-found", isComplete);
+  total.classList.toggle("accent-missing", !isComplete);
+  form.querySelector('button[name="change"][value="-1"]').disabled = isComplete;
+  form.querySelector('button[name="change"][value="1"]').disabled = missing >= quantity;
+  form.querySelector(".set-complete-part").disabled = isComplete;
+}
+
 function updateColorGroup(group) {
   if (!(group instanceof HTMLDetailsElement)) {
     return;
@@ -225,6 +254,9 @@ function updateColorGroup(group) {
     group.remove();
     return;
   }
+  const referenceCount = group.querySelectorAll(".piece-card").length;
+  group.querySelector(".color-heading span").textContent =
+    `${referenceCount} référence${referenceCount === 1 ? "" : "s"}`;
   const missing = [...group.querySelectorAll(".part-missing-total strong")].reduce(
     (total, count) => total + Number(count.textContent),
     0,
@@ -287,6 +319,7 @@ document.addEventListener("submit", async (event) => {
   controls.forEach((control) => { control.disabled = true; });
   const body = new FormData(form);
   body.set(button.name, button.value);
+  let responseSucceeded = false;
 
   try {
     const response = await fetch(form.action, {
@@ -299,7 +332,30 @@ document.addEventListener("submit", async (event) => {
       throw new Error(result.error || "Le statut de cette pièce n'a pas pu être mis à jour.");
     }
 
-    reloadMinifigTracking();
+    updateMinifigComponent(form, result.missing_quantity);
+    const card = form.closest(".piece-card");
+    const parentForm = card.querySelector(
+      `.set-status-form[action$="/parts/${result.parent_id}/missing"]`,
+    );
+    if (result.gathering_complete) {
+      removeCompletedGatheringSet(result.set_id);
+    } else if (parentForm) {
+      const isComplete = result.missing === 0;
+      const count = parentForm.querySelector(".set-missing-count");
+      count.textContent = result.missing;
+      count.setAttribute("aria-label", `${result.missing} pièce${result.missing === 1 ? "" : "s"} manquante${result.missing === 1 ? "" : "s"}`);
+      parentForm.classList.toggle("is-complete", isComplete);
+      parentForm.querySelector('button[name="change"][value="-1"]').disabled = isComplete;
+      parentForm.querySelector('button[name="change"][value="1"]').disabled =
+        result.missing >= result.parent_quantity;
+      parentForm.querySelector(".set-complete-part").disabled = isComplete;
+      refreshPieceCard(card);
+      const setCard = document.querySelector(`.candidate-grid .set-card[data-set-id="${result.set_id}"]`);
+      if (setCard) {
+        setCard.querySelector(".set-progress strong").textContent = result.set_missing;
+      }
+    }
+    responseSucceeded = true;
   } catch (error) {
     showInteractionError(
       error instanceof Error
@@ -308,7 +364,9 @@ document.addEventListener("submit", async (event) => {
     );
   } finally {
     delete form.dataset.pending;
-    controls.forEach((control, index) => { control.disabled = disabledStates[index]; });
+    if (form.isConnected && !responseSucceeded) {
+      controls.forEach((control, index) => { control.disabled = disabledStates[index]; });
+    }
   }
 });
 
@@ -369,7 +427,7 @@ document.addEventListener("submit", async (event) => {
   const form = event.target;
   if (
     !(form instanceof HTMLFormElement) ||
-    !form.matches(".stock-step-form, .stock-add-form, .stock-delete-form") ||
+    !form.matches(".stock-step-form, .stock-add-form") ||
     form.dataset.pending
   ) {
     return;

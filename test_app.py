@@ -230,6 +230,67 @@ class LegoListTests(unittest.TestCase):
             f'action="/sets/{set_id}/parts"'.encode(), collection_page.data
         )
 
+    def test_collection_part_keeps_full_name_and_color_for_compact_display(self):
+        set_id = self.add_set_and_part()
+        with legolist.database() as connection:
+            connection.execute(
+                "UPDATE set_parts SET part_name = ?, color_name = ? WHERE set_id = ?",
+                ("A very long brick name <special>", "A very long color", set_id),
+            )
+        self.client.post(f"/sets/{set_id}/collect")
+
+        page = self.client.get("/sets").get_data(as_text=True)
+        self.assertIn('title="A very long brick name &lt;special&gt;"', page)
+        self.assertIn('title="Réf. 3001 · A very long color"', page)
+        self.assertIn('aria-label="3 pièces manquantes sur 3"', page)
+        self.assertIn('<span class="set-missing-count">3</span><span class="part-total">/3</span>', page)
+        self.assertNotIn("×3 dans le set", page)
+        self.assertIn('class="set-status-form collection-part-controls "', page)
+        self.assertIn('name="mark_complete"', page)
+        self.assertIn('name="change" value="-1"', page)
+        self.assertIn('name="change" value="1"', page)
+
+    def test_collection_parts_are_grouped_by_color_per_set(self):
+        set_id = self.add_set_and_part()
+        for part_num, color_id, color_name in (
+            ("3002", "1", "Bleu"),
+            ("3003", "4", "Rouge"),
+            ("3004", "1", "Bleu"),
+        ):
+            response = self.client.post(
+                f"/sets/{set_id}/parts",
+                data={
+                    "part_num": part_num,
+                    "part_name": f"Pièce {part_num}",
+                    "color_id": color_id,
+                    "color_name": color_name,
+                    "quantity": "1",
+                },
+            )
+            self.assertEqual(response.status_code, 302)
+        self.client.post(f"/sets/{set_id}/collect")
+
+        page = self.client.get("/sets").get_data(as_text=True)
+        groups = page.split('<details class="collection-color-group" open>')[1:]
+        self.assertEqual(len(groups), 2)
+        self.assertIn("<strong>Bleu</strong>", groups[0])
+        self.assertIn('style="--brick: #0055BF"', groups[0])
+        self.assertIn("2 références", groups[0])
+        self.assertIn("Réf. 3002", groups[0])
+        self.assertIn("Réf. 3004", groups[0])
+        self.assertNotIn("Réf. 3001", groups[0])
+        self.assertIn("<strong>Rouge</strong>", groups[1])
+        self.assertIn('style="--brick: #C91A09"', groups[1])
+        self.assertIn("2 références", groups[1])
+        self.assertIn("Réf. 3001", groups[1])
+        self.assertIn("Réf. 3003", groups[1])
+
+    def test_color_gradients_use_known_colors_and_skip_unknown_colors(self):
+        self.assertEqual(legolist.lego_color_hex("Red"), "#C91A09")
+        self.assertEqual(legolist.lego_color_hex("rouge"), "#C91A09")
+        self.assertIsNone(legolist.lego_color_hex("Figurine"))
+        self.assertIsNone(legolist.lego_color_hex("Couleur inconnue"))
+
     def test_minifig_parts_can_be_marked_found_and_remain_found_after_refresh(self):
         response = self.client.post(
             "/sets",
@@ -276,6 +337,9 @@ class LegoListTests(unittest.TestCase):
         )
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.get_json()["missing_quantity"], 0)
+        self.assertEqual(response.get_json()["missing"], 0)
+        self.assertEqual(response.get_json()["set_missing"], 0)
+        self.assertFalse(response.get_json()["gathering_complete"])
 
         with legolist.database() as connection:
             legolist.replace_set_minifig_parts(
@@ -306,6 +370,39 @@ class LegoListTests(unittest.TestCase):
         )
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.get_json()["missing_quantity"], 2)
+
+    def test_completing_minifig_component_stops_completed_collected_gathering(self):
+        self.client.post("/sets", data={"set_num": "10312"})
+        with legolist.database() as connection:
+            set_id = connection.execute("SELECT id FROM sets").fetchone()["id"]
+            connection.execute(
+                """
+                INSERT INTO set_parts
+                    (set_id, part_num, part_name, color_id, color_name,
+                     quantity, missing_quantity, item_type)
+                VALUES (?, 'fig-001', 'Personnage', 0, 'Figurine', 1, 1, 'minifig')
+                """,
+                (set_id,),
+            )
+            legolist.replace_set_minifig_parts(
+                connection, set_id,
+                [{"fig_num": "fig-001", "part_num": "head", "part_name": "Tête",
+                  "color_id": 1, "color_name": "Jaune", "quantity": 1}],
+            )
+            component_id = connection.execute(
+                "SELECT id FROM minifig_parts WHERE set_id = ?", (set_id,)
+            ).fetchone()["id"]
+        self.client.post(f"/sets/{set_id}/collect")
+
+        response = self.client.post(
+            f"/minifig-parts/{component_id}/status",
+            data={"mark_complete": "1"},
+            headers={"X-Requested-With": "XMLHttpRequest"},
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.get_json()["gathering_complete"])
+        self.assertEqual(response.get_json()["part_missing"], 0)
+        self.assertEqual(response.get_json()["set_missing"], 0)
 
     def test_complete_set_parts_updates_minifig_parts(self):
         set_id = self.add_set_and_part()
@@ -371,6 +468,11 @@ class LegoListTests(unittest.TestCase):
             data={"change": "-1"}, headers=headers,
         )
         self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.get_json()["parent_id"], fig_id)
+        self.assertEqual(response.get_json()["missing"], 2)
+        self.assertEqual(response.get_json()["parent_quantity"], 2)
+        self.assertEqual(response.get_json()["missing_quantity"], 1)
+        self.assertFalse(response.get_json()["gathering_complete"])
         self.client.post(
             f"/minifig-parts/{components['hand']}/status",
             data={"change": "-1"}, headers=headers,
@@ -393,8 +495,12 @@ class LegoListTests(unittest.TestCase):
         self.assertEqual(missing, 1)
         self.assertEqual(component_missing, {"head": 1, "hand": 2})
 
-        self.client.post(
+        response = self.client.post(
             f"/parts/{fig_id}/missing", data={"mark_complete": "1"}, headers=headers
+        )
+        self.assertEqual(
+            {item["id"]: item["missing_quantity"] for item in response.get_json()["components"]},
+            {components["head"]: 0, components["hand"]: 0},
         )
         with legolist.database() as connection:
             self.assertEqual(
@@ -635,6 +741,7 @@ class LegoListTests(unittest.TestCase):
 
         page = self.client.get("/inventaire")
         self.assertEqual(page.status_code, 200)
+        self.assertIn(b'class="color-header" style="--brick: #C91A09"', page.data)
         self.assertIn(b"Mon inventaire", page.data)
         self.assertIn(b"Rouge", page.data)
         self.assertIn(b"Brique 2 x 4", page.data)
@@ -2592,8 +2699,47 @@ class LegoListTests(unittest.TestCase):
         self.insert_set_part(gathering_id, "3004", color_id=4, quantity=2, missing_quantity=1)
         page = self.client.get("/inventaire")
         self.assertIn(b'class="stock-stepper"', page.data)
+        self.assertIn('aria-label="3 pièces en vrac"'.encode(), page.data)
+        self.assertIn('aria-label="0 pièces en vrac"'.encode(), page.data)
+        self.assertIn(b'class="stock-buttons"', page.data)
+        self.assertNotIn(b'class="stock-delete-form"', page.data)
         self.assertIn(b'data-part="3004" data-color="4" data-total="1"', page.data)
         self.assertNotIn(b"part-badge", page.data)
+
+    def test_inventory_stock_stepper_handles_zero_and_other_origins(self):
+        collected_id = self.create_collected_set("75192")
+        self.insert_set_part(
+            collected_id, "3001", color_id=4, quantity=2, missing_quantity=0
+        )
+        stock = self.add_stock_part("3001", color_id=4, quantity=1)
+        headers = {"X-Requested-With": "XMLHttpRequest"}
+        response = self.client.post(
+            f"/stock/{stock['id']}/adjust", data={"change": "-1"}, headers=headers
+        )
+        self.assertEqual(response.status_code, 200)
+        result = response.get_json()
+        self.assertFalse(result["removed"])
+        self.assertIn('aria-label="0 pièces en vrac"', result["html"])
+        self.assertNotIn('class="stock-delete', result["html"])
+        self.assertIn('class="stock-add-form"', result["html"])
+
+        response = self.client.post(
+            "/stock",
+            data={"part_num": "3001", "part_name": "Pièce 3001", "color_id": "4",
+                  "color_name": "Rouge", "quantity": "1"},
+            headers=headers,
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('aria-label="1 pièce en vrac"', response.get_json()["html"])
+
+        only_stock = self.add_stock_part("3002", color_id=4, quantity=1)
+        response = self.client.post(
+            f"/stock/{only_stock['id']}/adjust",
+            data={"change": "-1"},
+            headers=headers,
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.get_json()["removed"])
 
     def test_pieces_page_offers_stock_for_missing_part(self):
         self.add_stock_part("3001", color_id=4, quantity=3)

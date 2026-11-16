@@ -212,10 +212,22 @@ LEGO_COLOR_HEX = {
 COLORS_WITHOUT_HEX = {"", "Figurine", "[No Color/Any Color]"}
 
 
+@app.template_filter("lego_color_hex")
 def lego_color_hex(color_name):
     if not color_name or color_name in COLORS_WITHOUT_HEX:
         return None
-    return LEGO_COLOR_HEX.get(color_name)
+    aliases = {
+        "noir": "Black",
+        "blanc": "White",
+        "rouge": "Red",
+        "bleu": "Blue",
+        "vert": "Green",
+        "jaune": "Yellow",
+        "orange": "Orange",
+        "violet": "Purple",
+        "brun": "Brown",
+    }
+    return LEGO_COLOR_HEX.get(aliases.get(color_name.casefold(), color_name))
 
 
 def authentication_config_error():
@@ -2721,7 +2733,7 @@ def update_missing(part_id):
         elif request.headers.get("X-Requested-With") == "XMLHttpRequest":
             part = connection.execute(
                 """
-                SELECT p.missing_quantity, p.quantity, p.part_num, p.color_id, p.set_id
+                SELECT p.missing_quantity, p.quantity, p.part_num, p.color_id, p.set_id, p.item_type
                 FROM set_parts p WHERE p.id = ?
                 """,
                 (part_id,),
@@ -2768,6 +2780,17 @@ def update_missing(part_id):
                 "set_missing": set_missing,
                 "gathering_complete": bool(gathering_complete),
             }
+            if part["item_type"] == "minifig":
+                response_data["components"] = [
+                    dict(row)
+                    for row in connection.execute(
+                        """
+                        SELECT id, missing_quantity
+                        FROM minifig_parts WHERE set_id = ? AND fig_num = ?
+                        """,
+                        (part["set_id"], part["part_num"]),
+                    )
+                ]
         elif cursor.rowcount:
             part = connection.execute(
                 "SELECT set_id FROM set_parts WHERE id = ?", (part_id,)
@@ -2835,7 +2858,7 @@ def update_minifig_part_status(part_id):
                 (missing, part_id),
             )
             sync_minifig_parent_from_components(connection, part["set_id"], part["fig_num"])
-            connection.execute(
+            gathering_cursor = connection.execute(
                 """
                 UPDATE sets SET in_gathering = 0
                 WHERE id = ? AND in_collection = 1 AND in_gathering = 1
@@ -2846,6 +2869,26 @@ def update_minifig_part_status(part_id):
                 """,
                 (part["set_id"],),
             )
+            parent = connection.execute(
+                """
+                SELECT id, part_num, color_id, quantity, missing_quantity
+                FROM set_parts
+                WHERE set_id = ? AND part_num = ? AND item_type = 'minifig'
+                """,
+                (part["set_id"], part["fig_num"]),
+            ).fetchone()
+            part_missing = connection.execute(
+                """
+                SELECT COALESCE(SUM(p.missing_quantity), 0)
+                FROM sets s JOIN set_parts p ON p.set_id = s.id
+                WHERE s.in_gathering = 1 AND p.part_num = ? AND p.color_id = ?
+                """,
+                (parent["part_num"], parent["color_id"]),
+            ).fetchone()[0]
+            set_missing = connection.execute(
+                "SELECT COALESCE(SUM(missing_quantity), 0) FROM set_parts WHERE set_id = ?",
+                (part["set_id"],),
+            ).fetchone()[0]
 
     if part is None:
         message = "Cette pièce de figurine n'existe plus."
@@ -2859,6 +2902,13 @@ def update_minifig_part_status(part_id):
                 "part_name": part["part_name"],
                 "quantity": part["quantity"],
                 "missing_quantity": missing,
+                "parent_id": parent["id"],
+                "missing": parent["missing_quantity"],
+                "parent_quantity": parent["quantity"],
+                "part_missing": part_missing,
+                "set_id": part["set_id"],
+                "set_missing": set_missing,
+                "gathering_complete": gathering_cursor.rowcount > 0,
             }
         )
     flash("Statut de la pièce de figurine mis à jour.", "success")

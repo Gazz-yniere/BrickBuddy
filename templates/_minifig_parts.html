@@ -32,7 +32,7 @@
               {% endif %}
             </div>
             {% if set_entry %}
-              <form class="minifig-part-status-form {{ 'is-complete' if piece.missing_quantity == 0 else '' }} set-tone-{{ set_entry.id % 6 }}" action="{{ url_for('update_minifig_part_status', part_id=piece.id) }}" method="post">
+              <form class="minifig-part-status-form {{ 'is-complete' if piece.missing_quantity == 0 else '' }} set-tone-{{ set_entry.id % 6 }}" action="{{ url_for('update_minifig_part_status', part_id=piece.id) }}" method="post" data-quantity="{{ piece.quantity }}">
                 <span class="set-missing-count">{{ piece.missing_quantity }}</span>
                 <button class="set-complete-part" type="submit" name="mark_complete" value="1" title="Tout trouvé" aria-label="Marquer toutes les pièces {{ piece.part_name }} comme trouvées" {{ 'disabled' if piece.missing_quantity == 0 else '' }}><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m5 12 4 4L19 6"/></svg></button>
                 <button class="set-step-button" type="submit" name="change" value="-1" aria-label="Une pièce {{ piece.part_name }} de moins à trouver" title="Une pièce de moins" {{ 'disabled' if piece.missing_quantity == 0 else '' }}>−</button>

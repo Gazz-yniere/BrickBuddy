@@ -46,8 +46,8 @@
       <h2>Tout ce qu'il faut pour faire le tri.</h2>
       <div class="feature-grid">
         <article class="feature"><span class="feature-icon" aria-hidden="true">▦</span><h3>Pièces à réunir</h3><p>Regroupe tes besoins et suis les quantités manquantes par set, y compris les composants de figurines.</p></article>
-        <article class="feature"><span class="feature-icon" aria-hidden="true">▤</span><h3>Mes sets</h3><p>Garde une fiche par exemplaire et choisis les sets dont tu souhaites suivre les pièces.</p></article>
-        <article class="feature"><span class="feature-icon" aria-hidden="true">▥</span><h3>Inventaire et vrac</h3><p>Retrouve les pièces disponibles et utilise ton vrac pour compléter les sets à réunir.</p></article>
+        <article class="feature"><span class="feature-icon" aria-hidden="true">▤</span><h3>Mes sets</h3><p>Garde une fiche par exemplaire et retrouve ses pièces en grille, regroupées par couleur.</p></article>
+        <article class="feature"><span class="feature-icon" aria-hidden="true">▥</span><h3>Inventaire et vrac</h3><p>Distingue pièces en vrac, dans les sets et réservées, et utilise ton vrac pour compléter tes sets.</p></article>
         <article class="feature"><span class="feature-icon" aria-hidden="true">⇩</span><h3>Export et import</h3><p>Importe les inventaires avec Rebrickable et exporte tes listes en BrickLink XML ou BrickOwl CSV.</p></article>
       </div>
     </section>
@@ -57,8 +57,8 @@
         <div class="demo-intro">
           <p class="eyebrow">À TOI DE JOUER</p>
           <h2>Découvre ton futur atelier.</h2>
-          <p>Navigue entre les écrans et essaie le suivi des pièces et d'une figurine.</p>
-          <p class="notice"><strong>Démo statique :</strong> interface simplifiée avec un set fictif. Les modifications restent dans cette page et disparaissent au rechargement. L'import, le vrac et l'export nécessitent l'application complète.</p>
+          <p>Découvre le suivi avec le Millennium Falcon Microfighter 75193-1, un set Star Wars de 2018 comprenant 92 pièces et une figurine Chewbacca. <a href="https://www.brickeconomy.com/set/75193-1/lego-star-wars-millennium-falcon-microfighter">Voir la fiche du set ↗</a></p>
+          <p class="notice"><strong>Démo statique :</strong> les références et quantités proviennent de l'<a href="https://www.brickowl.com/catalog/lego-millennium-falcon-microfighter-set-75193/inventory?catalog_inventory_display=table">inventaire Brick Owl</a> (89 pièces et une figurine comptée comme un élément). Images : <a href="https://rebrickable.com/">Rebrickable</a>. Les pièces manquantes et le vrac sont fictifs. Les modifications disparaissent au rechargement. L'import, les transferts de vrac et les exports nécessitent l'application complète.</p>
         </div>
         <div class="demo-window" id="demo-app">
           <aside class="demo-sidebar">
@@ -80,32 +80,28 @@
               <p>Choisis les sets dont tu recherches les pièces.</p>
               <div class="demo-section-heading"><div><span>SUIVI DES PIÈCES</span><h4>Sets à réunir <em>1</em></h4></div></div>
               <article class="demo-set-card">
-                <span class="demo-set-avatar" aria-hidden="true">🧱</span>
-                <div class="demo-set-copy"><strong>Le petit atelier</strong><small>Réf. 00001-1 · 7 pièces · Set fictif</small></div>
+                <span class="demo-set-avatar"><img src="demo-images/set.jpg" alt="" width="58" height="58"></span>
+                <div class="demo-set-copy"><strong>Millennium Falcon Microfighter</strong><small>Réf. 75193-1 · 2018 · 92 pièces · 90 éléments suivis (figurine comprise)</small></div>
                 <div class="demo-set-total"><strong data-total-missing>4</strong><small>à réunir</small></div>
                 <button class="demo-complete-set" type="button" data-complete-set>✓ Tout trouvé</button>
               </article>
-              <div class="demo-toolbar"><label>⌕ <input id="demo-search" type="search" placeholder="Chercher une pièce ou une couleur..." aria-label="Chercher une pièce dans la démo"></label><label>Couleur <select id="demo-color"><option value="">Toutes les couleurs</option><option>Orange</option><option>Bleu</option><option>Figurine</option></select></label></div>
-              <div class="demo-section-heading"><h4>Pièces du set à réunir</h4><small>3 références · 3 couleurs</small></div>
-              <div class="demo-groups">
-                <details class="demo-color-group" data-group="orange" open><summary><span class="demo-swatch orange"></span><strong>Orange</strong><small>1 référence</small><span><b data-missing="brick">2</b> / 3 à trouver</span></summary><div class="demo-parts-grid" data-card="brick"></div></details>
-                <details class="demo-color-group" data-group="bleu" open><summary><span class="demo-swatch blue"></span><strong>Bleu</strong><small>1 référence</small><span><b data-missing="plate">1</b> / 3 à trouver</span></summary><div class="demo-parts-grid" data-card="plate"></div></details>
-                <details class="demo-color-group" data-group="figurine" open><summary><span class="demo-swatch yellow"></span><strong>Figurine</strong><small>1 référence</small><span><b data-missing="figure">1</b> / 1 à trouver</span></summary><div class="demo-parts-grid" data-card="figure"></div></details>
-              </div>
+              <div class="demo-toolbar"><label>⌕ <input id="demo-search" type="search" placeholder="Chercher une pièce ou une couleur..." aria-label="Chercher une pièce dans la démo"></label><label>Couleur <select id="demo-color"><option value="">Toutes les couleurs</option></select></label></div>
+              <div class="demo-section-heading"><h4>Pièces à réunir</h4><small>46 références · figurine comprise</small></div>
+              <div class="demo-groups"></div>
               <p id="demo-no-results" hidden>Aucune pièce trouvée dans la démo.</p>
             </section>
             <section class="demo-screen" data-screen="sets" hidden>
               <p class="demo-eyebrow">✦ TA COLLECTION</p><h3>Mes sets</h3><p>Les sets que tu possèdes, indépendamment des pièces en vrac.</p>
               <div class="demo-section-heading"><div><span>MES MODÈLES</span><h4>Sets suivis <em>1</em></h4></div></div>
-              <details class="demo-collection" open><summary><span class="demo-set-avatar" aria-hidden="true">🧱</span><span class="demo-set-copy"><strong>Le petit atelier</strong><small>Réf. 00001-1 · Set fictif · 7 pièces</small></span><span class="demo-set-total"><strong data-total-missing>4</strong><small>à trouver</small></span><span>⌄</span></summary><div class="demo-collection-parts" id="demo-collection-parts"></div></details>
+              <details class="demo-collection" open><summary><span class="demo-set-avatar"><img src="demo-images/set.jpg" alt="" width="58" height="58"></span><span class="demo-set-copy"><strong>Millennium Falcon Microfighter</strong><small>Réf. 75193-1 · 2018 · 92 pièces · 90 éléments suivis (figurine comprise)</small></span><span class="demo-set-total"><strong data-total-missing>4</strong><small>à trouver</small></span><span>⌄</span></summary><div id="demo-collection-parts" class="demo-collection-colors"></div></details>
             </section>
             <section class="demo-screen" data-screen="inventory" hidden>
-              <p class="demo-eyebrow">▥ TON INVENTAIRE</p><h3>Mon inventaire</h3><p>Les pièces trouvées dans le set fictif.</p>
-              <div class="demo-stat-row"><div><strong data-total-found>3</strong><span>pièces trouvées</span></div><div><strong>0</strong><span>en vrac</span></div><div><strong data-total-found>3</strong><span>dans le set</span></div></div>
+              <p class="demo-eyebrow">▥ TON INVENTAIRE</p><h3>Mon inventaire</h3><p>Les pièces trouvées et ton vrac de démonstration.</p>
+              <div class="demo-stat-row"><div><strong data-inventory-total>88</strong><span>éléments en tout</span></div><div><strong data-stock-total>2</strong><span>en vrac</span></div><div><strong data-total-found>86</strong><span>dans le set</span></div></div>
               <div class="demo-section-heading"><h4>Pièces disponibles</h4></div><div class="demo-inventory-list" id="demo-inventory-list"></div>
             </section>
             <section class="demo-screen" data-screen="missing" hidden>
-              <p class="demo-eyebrow">✦ LA LISTE DE CHASSE</p><h3>Pièces manquantes</h3><p>Les pièces à retrouver pour compléter le set fictif.</p>
+              <p class="demo-eyebrow">✦ LA LISTE DE CHASSE</p><h3>Pièces manquantes</h3><p>Les pièces à retrouver dans cette démonstration.</p>
               <div class="demo-section-heading"><h4>À dénicher</h4><small><b data-total-missing>4</b> pièces à trouver</small></div><div class="demo-collection-parts" id="demo-missing-list"></div><p id="demo-all-found" hidden>Tout est trouvé !</p>
             </section>
             <div id="demo-announcement" class="demo-announcement" role="status" aria-live="polite"></div>
@@ -115,13 +111,25 @@
       </div>
     </section>
 
+    <section class="section container" aria-labelledby="screenshots-title">
+      <p class="eyebrow">L'APPLICATION EN IMAGES</p>
+      <h2 id="screenshots-title">Un écran pour chaque étape.</h2>
+      <p class="screenshots-note">Captures de l'application avec le set 75457-1 et des quantités de démonstration ; l'interface peut avoir évolué depuis leur réalisation.</p>
+      <div class="screenshots-grid">
+        <figure><a href="screenshots/pieces-a-reunir.png"><img src="screenshots/pieces-a-reunir.png" alt="Pièces à réunir, regroupées par couleur" loading="lazy"></a><figcaption>Pièces à réunir · Les besoins par couleur et par set.</figcaption></figure>
+        <figure><a href="screenshots/mes-sets.png"><img src="screenshots/mes-sets.png" alt="Détail d'un set dans la collection" loading="lazy"></a><figcaption>Mes sets · Le détail d'un exemplaire suivi.</figcaption></figure>
+        <figure><a href="screenshots/inventaire.png"><img src="screenshots/inventaire.png" alt="Inventaire des pièces disponibles" loading="lazy"></a><figcaption>Inventaire · Les pièces disponibles par couleur.</figcaption></figure>
+        <figure><a href="screenshots/pieces-manquantes.png"><img src="screenshots/pieces-manquantes.png" alt="Liste des pièces manquantes" loading="lazy"></a><figcaption>Pièces manquantes · Ce qu'il reste à trouver.</figcaption></figure>
+      </div>
+    </section>
+
     <section id="documentation" class="section container">
       <p class="eyebrow">PRENDRE EN MAIN</p>
       <h2>Installe ton propre atelier.</h2>
       <div class="docs-grid">
         <article class="feature">
           <h3>1. Configure l'accès</h3>
-          <p>Copie le fichier <code>.env.example</code> en <code>.env</code>, puis renseigne une clé de session et un mot de passe. La clé Rebrickable est facultative.</p>
+          <p>Copie <code>.env.example</code> en <code>.env</code>, puis renseigne une clé de session aléatoire et un mot de passe d'au moins 12 caractères. La clé Rebrickable est facultative.</p>
           <a href="https://github.com/Gazz-yniere/BrickBuddy#configuration-commune">Voir la configuration →</a>
         </article>
         <article class="feature">
@@ -132,7 +140,7 @@
         </article>
         <article class="feature">
           <h3>3. Construis ta collection</h3>
-          <p>Ajoute un set, suis les pièces trouvées et utilise les filtres pour retrouver ce qu'il te manque.</p>
+          <p>Sans clé Rebrickable, ajoute un set dans « Mes sets » pour saisir ses pièces, puis active « Suivre » pour les réunir.</p>
           <a href="https://github.com/Gazz-yniere/BrickBuddy#utiliser-brick-buddy">Guide d'utilisation →</a>
         </article>
       </div>

@@ -62,7 +62,8 @@ Brick Buddy est une application web en français pour organiser une collection L
    composants se suivent par quantité et par set. Marquer une figurine complète
    marque ses composants comme trouvés ; une pièce manquante rend la figurine
    incomplète. Pour plusieurs exemplaires, le composant disponible en quantité
-   la plus limitante détermine combien de figurines sont complètes.
+   la plus limitante détermine combien de figurines sont complètes. Les
+   compteurs se mettent à jour sans recharger les images de la page.
 4. **Gère le vrac** dans « Inventaire ». Dans « Pièces à réunir », le bouton
    « Prendre dans le vrac » sur une pièce transfère les quantités disponibles
    vers les sets en recherche. Ce transfert ne crée pas de nouvelles pièces.
@@ -80,17 +81,31 @@ ajoute-y le set, déplie-le pour saisir ses pièces, puis utilise « Suivre » s
 tu souhaites les réunir. L'ajout d'un set vide directement dans « Pièces à
 réunir » ne permet pas de saisir ses pièces sur cette page.
 
+Dans « Mes sets », les pièces d'un set ouvert sont regroupées par couleur
+dans des sections repliables et présentées en grille compacte.
+Sur grand écran, la grille présente sept pièces par ligne avec des images de
+100 pixels.
+Le nom complet et la référence avec la couleur restent visibles au survol
+lorsque le texte est tronqué. Le compteur affiche les pièces manquantes sur
+le nombre total de pièces du set. La grille s'adapte aux petits écrans.
+
 ## Présentation et démo
 
 Le [site GitHub Pages](https://gazz-yniere.github.io/BrickBuddy/) présente
 le projet, son installation et une démo interactive inspirée de l'atelier.
 La démo permet de naviguer entre les vues, de rechercher des pièces et de
-suivre un set et une figurine fictifs. Le site est publié depuis
+suivre le set réel 75193-1 et un vrac fictif. Le site est publié depuis
 [`docs/`](docs/) par le workflow GitHub Actions après activation de
 **Settings → Pages → Build and deployment → GitHub Actions**.
 
-La démo utilise des données fictives uniquement en mémoire : elle ne se
-connecte ni à ta base ni à Rebrickable et ses modifications disparaissent au
+La démo intègre statiquement les références et quantités de
+l'[inventaire Brick Owl du 75193-1](https://www.brickowl.com/catalog/lego-millennium-falcon-microfighter-set-75193/inventory?catalog_inventory_display=table)
+et les [composants de Chewbacca](https://www.brickowl.com/catalog/lego-chewbacca-with-bandolier-minifigure/inventory?catalog_inventory_display=table).
+Les 89 pièces et la figurine comptée comme un élément représentent 90 éléments
+suivis, distincts des 92 pièces annoncées sur la boîte. Les images du set et des
+pièces proviennent de [Rebrickable](https://rebrickable.com/) et sont incluses
+dans le site statique ; les quantités manquantes et le vrac sont fictifs.
+La démo ne se connecte ni à ta base ni à Rebrickable et ses modifications disparaissent au
 rechargement. GitHub Pages ne peut pas exécuter le serveur Flask : pour gérer
 une vraie collection, lance l'application localement ou avec Docker.
 

@@ -14,7 +14,7 @@
 
   <section id="sets-a-reunir">
     <div class="section-heading">
-      <div><div class="eyebrow">SUIVI DES PIÈCES</div><h2>Sets à réunir <span class="heading-count">{{ sets_to_assemble|length }}</span></h2></div>
+      <div><div class="eyebrow">SUIVI DES PIÈCES</div><h2>Sets à réunir <span class="heading-count" data-gathering-set-count>{{ sets_to_assemble|length }}</span></h2></div>
     </div>
     {% if sets_to_assemble %}
       <div class="set-grid candidate-grid">
@@ -75,7 +75,7 @@
   </section>
 
   {% if groups %}
-    <div class="results-heading"><h2>Pièces des sets à réunir</h2><span>{{ parts|length }} références · {{ groups|length }} couleurs</span></div>
+    <div class="results-heading"><h2>Pièces des sets à réunir</h2><span data-gathering-part-summary>{{ parts|length }} références · {{ groups|length }} couleurs</span></div>
     <div class="color-groups">
       {% for group in groups %}
         <details class="color-card color-group" data-color-group data-missing="{{ group.missing }}" {{ 'open' if group.missing else '' }} data-group-key="{{ group.name }}">
