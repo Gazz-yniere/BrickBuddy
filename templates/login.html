@@ -5,16 +5,22 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#171717">
   <title>Connexion · LEGO</title>
-  <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg', v=2) }}">
+  <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg', v=asset_version('favicon.svg')) }}">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css', v=8) }}">
+  {# Seules les polices sont chargées en différé : la carte se structure avec le CSS local. #}
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" media="print" onload="this.media='all'">
+  {# Les mêmes feuilles partagées que les écrans, puis la feuille de la carte. #}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/variables.css', v=asset_version('css/variables.css')) }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/critical.css', v=asset_version('css/critical.css')) }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css', v=asset_version('css/base.css')) }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/layout.css', v=asset_version('css/layout.css')) }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/login.css', v=asset_version('css/login.css')) }}">
 </head>
 <body class="login-page">
   <main class="login-card">
     <a class="brand login-brand" href="{{ url_for('login') }}"><span class="brand-mark">B</span><span>brick<span class="brand-light">buddy</span></span></a>
-    <div class="eyebrow">MON ATELIER</div>
+    <div class="eyebrow">BRICK BUDDY</div>
     <h1>Bon retour</h1>
     <p class="login-description">Entre le mot de passe pour accéder à ta collection.</p>
     {% if config_error %}

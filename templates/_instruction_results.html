@@ -1,0 +1,11 @@
+{# Fragment renvoye par la recherche AJAX : l'en-tete du panneau et les tuiles
+   des notices trouvees qui ne sont pas encore enregistrees.
+   Variables : set, manuals, official, search_error. #}
+<div data-results-head>{% include "_instruction_head.html" %}</div>
+{% if official %}
+  <div data-results-tiles>
+    {% for instruction in official|rejectattr('saved')|list %}
+      {% include "_instruction_download_tile.html" %}
+    {% endfor %}
+  </div>
+{% endif %}

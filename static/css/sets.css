@@ -1,0 +1,71 @@
+/* ============================================================
+   « Mes sets » : thèmes, cartes de set, pièces d'un set
+   ============================================================ */
+
+.set-search { max-width: 270px; flex: 1; }
+.collection-theme-list { display: grid; gap: 12px; }
+.collection-theme { border: 1px solid var(--line); border-radius: 11px; background: var(--panel); }
+.collection-theme-summary { display: flex; min-height: 48px; align-items: center; gap: 10px; padding: 10px 14px; cursor: pointer; list-style: none; background: var(--panel-raised); }
+.collection-theme-summary::-webkit-details-marker { display: none; }
+.collection-theme[open] > .collection-theme-summary { border-bottom: 1px solid var(--line); }
+.collection-theme-title { flex: 1; color: var(--ink); font: 600 16px var(--font-display); }
+.collection-theme-count { color: var(--purple); font-size: 12px; font-weight: 700; }
+
+.collection-set-list { display: grid; gap: 7px; }
+.collection-theme > .collection-set-list { padding: 9px; }
+.collection-set-summary { display: flex; min-height: 66px; align-items: center; gap: 10px; padding: 10px 14px; cursor: pointer; list-style: none; }
+.collection-set-summary::-webkit-details-marker { display: none; }
+.collection-set-heading { display: flex; min-width: 180px; flex: 1 1 auto; flex-wrap: wrap; align-items: center; gap: 10px; }
+.collection-set-summary .set-title { display: grid; min-width: 0; flex: 1; gap: 4px; }
+.collection-set-summary .set-title strong { overflow: hidden; color: var(--ink); font: 600 14px var(--font-display); text-overflow: ellipsis; white-space: nowrap; }
+.collection-set-summary .set-title small { color: var(--muted-strong); font-size: 12px; }
+.collection-set-content { border-top: 1px solid var(--line); }
+
+/* Actions d'un set : une ligne de pastilles, chacune à son emplacement */
+.collection-set-controls { display: grid; min-width: 0; flex: 0 0 auto; align-items: center; gap: 6px; grid-auto-rows: 30px; grid-template-columns: 30px 82px 30px 60px 60px 60px 110px 110px 30px 30px; grid-template-areas: "link build refresh year image theme complete follow add remove"; }
+.collection-set-controls form { margin: 0; }
+.collection-set-controls .button { min-height: 30px; padding: 0 9px; border: 0; border-radius: 999px; color: var(--control-ink); background: var(--control-bg); font-size: 12px; white-space: nowrap; }
+.collection-set-controls .button:hover { color: var(--control-hover-ink); background: var(--control-hover-bg); }
+/* Boutons réduits à leur icône (lien externe, actualisation) : la pastille garde 30 px */
+.collection-set-controls .button-icon { display: grid; padding: 0; place-items: center; font-size: 15px; line-height: 1; }
+/* Un exemplaire de plus : la pastille se colore ; « en recherche » reste neutre */
+.collection-set-controls form:not(.collection-control-add):not(.collection-control-remove) .button { width: 100%; }
+.collection-set-controls form:has(input[name="return_to"]) .button { color: var(--accent-ink); background: var(--accent-warm); }
+.collection-set-controls form:has(input[name="in_gathering"]) .button { color: var(--control-ink); background: var(--control-bg); }
+.collection-set-controls .rebrickable-link { grid-area: link; color: var(--link-ink); background: var(--link-bg); }
+.collection-set-controls .rebrickable-link:hover { background: var(--link-hover-bg); }
+.collection-control-build { grid-area: build; }
+.collection-control-refresh { grid-area: refresh; }
+.collection-control-year { grid-area: year; }
+.collection-control-image { grid-area: image; }
+.collection-control-theme { grid-area: theme; }
+.collection-control-complete { grid-area: complete; }
+.collection-control-follow { grid-area: follow; }
+.collection-control-add { grid-area: add; }
+.collection-control-remove { grid-area: remove; }
+/* « Ajouter un exemplaire » et « retirer » : la pastille ronde reste à 30 px */
+.collection-set-controls .set-copy-button { width: 30px; height: 30px; }
+.collection-set-controls .copy-add { border-radius: 9px; color: var(--accent-ink); background: var(--accent-warm); }
+.collection-set-controls .copy-remove { border-color: var(--remove-line); color: var(--remove-ink); background: var(--control-bg); }
+.collection-set-controls .copy-remove:hover { border-color: var(--remove-hover-line); color: var(--remove-hover-ink); background: var(--remove-hover-bg); }
+
+/* Groupe de couleur d'un set, puis ses pièces */
+.collection-color-group + .collection-color-group { border-top: 1px solid var(--line); }
+.collection-color-header { display: flex; align-items: center; gap: 8px; padding: 8px 10px; cursor: pointer; list-style: none; background: var(--panel-raised); }
+.collection-color-header::-webkit-details-marker { display: none; }
+.collection-color-header .color-swatch { width: 16px; height: 16px; flex-basis: 16px; }
+.collection-color-header strong { flex: 1; min-width: 0; overflow: hidden; color: var(--ink); font-size: 13px; text-overflow: ellipsis; white-space: nowrap; }
+.collection-color-header > span:not(.color-swatch):not(.collection-color-chevron) { color: var(--muted-strong); font-size: 12px; white-space: nowrap; }
+.set-part-list { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); align-items: start; gap: 6px; padding: 8px; }
+.collection-part-card { display: grid; min-width: 0; align-content: start; gap: 5px; padding: 6px; border: 1px solid var(--tile-line); border-radius: 9px; background: var(--panel-deep); }
+.collection-part-image { display: grid; width: 100px; max-width: 100%; height: auto; aspect-ratio: 1 / 1; justify-self: center; place-items: center; object-fit: contain; border: 1px solid var(--image-line); border-radius: 7px; color: var(--image-ink); background: var(--image-bg); }
+.collection-part-copy { display: grid; min-width: 0; align-content: center; gap: 2px; }
+.collection-part-copy strong, .collection-part-copy span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.collection-part-copy strong { color: var(--ink); font-size: 13px; font-weight: 600; line-height: 1.35; }
+.collection-part-copy span { color: var(--muted-strong); font-size: 12px; }
+.collection-part-controls.set-status-form { justify-content: flex-end; flex-wrap: wrap; gap: 3px; padding: 0 3px; }
+.collection-part-count { display: inline-flex; align-items: baseline; white-space: nowrap; }
+.collection-part-count .part-total { color: var(--muted); font-size: 12px; }
+.collection-part-controls .set-missing-count { min-width: 0; font-size: 15px; }
+.collection-part-buttons { display: flex; flex: 0 0 auto; gap: 2px; margin-left: auto; }
+.collection-part-controls .set-step-button, .collection-part-controls .set-complete-part { width: 34px; height: 34px; }

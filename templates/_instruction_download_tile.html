@@ -1,0 +1,28 @@
+{# Tuile d'une notice LEGO trouvee mais pas encore enregistree, dans le carrousel.
+   Variables : instruction (url, title, image, position).
+   Le numero du livre est celui de la liste LEGO : il ne change pas quand la
+   notice est telechargee, la carte enregistree reprend le meme numero. #}
+{% set number = instruction.position + 1 %}
+<article class="instruction-card instruction-card-download" data-instruction-card data-download-tile data-position="{{ instruction.position }}" title="Télécharger cette notice pour la lire ici">
+  <span class="instruction-card-position">Livre {{ number }}</span>
+  <div class="instruction-card-thumb">
+    {% if instruction.image %}
+      <img src="{{ instruction.image }}" alt="Couverture de la notice {{ number }}" loading="lazy" referrerpolicy="no-referrer">
+    {% else %}
+      <span class="instruction-cover-empty" aria-hidden="true">▤</span>
+    {% endif %}
+  </div>
+  <h3 class="instruction-card-title">{{ instruction.title or 'Notice LEGO ' ~ number }}</h3>
+  <p class="instruction-card-file">{{ instruction.url.split('/')[-1] }}</p>
+  <div class="instruction-card-actions">
+    <a class="button button-outline" href="{{ instruction.url }}" target="_blank" rel="noopener noreferrer">Ouvrir ↗</a>
+    <form class="instruction-download-form" action="{{ url_for('download_instruction', set_id=set.id) }}" method="post">
+      <input type="hidden" name="csrf_token" value="{{ session.csrf_token }}">
+      <input type="hidden" name="url" value="{{ instruction.url }}">
+      <input type="hidden" name="title" value="{{ instruction.title }}">
+      <input type="hidden" name="position" value="{{ instruction.position }}">
+      <input type="hidden" name="search_return" value="1">
+      <button class="button button-primary" type="submit"><span class="button-spinner" aria-hidden="true"></span><span>Télécharger</span></button>
+    </form>
+  </div>
+</article>

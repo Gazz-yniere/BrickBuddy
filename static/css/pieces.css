@@ -1,0 +1,46 @@
+/* ============================================================
+   « Pièces à réunir » : groupes de couleur, cartes de pièces
+   ============================================================ */
+
+.color-groups { display: grid; grid-template-columns: minmax(0, 1fr); align-items: start; gap: 14px; }
+.color-heading { display: grid; flex: 1; gap: 3px; min-width: 0; }
+.color-heading h3 { margin: 0; overflow: hidden; color: var(--ink); font: 600 15px var(--font-display); text-overflow: ellipsis; white-space: nowrap; }
+.color-heading span { color: var(--muted); font-size: 12px; }
+.color-totals { display: inline-flex; align-items: baseline; gap: 4px; white-space: nowrap; }
+.color-totals strong { color: var(--missing-color); font: 700 22px var(--font-display); }
+.color-totals span { color: var(--muted); font-size: 12px; }
+
+.parts-grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); align-items: start; gap: 5px; padding: 5px; border-top: 1px solid var(--line); }
+.part-missing-total { display: flex; align-items: baseline; gap: 5px; }
+.part-missing-total strong { font: 700 24px/1 var(--font-display); }
+.part-missing-total span { color: var(--muted); font-size: 12px; }
+.piece-set-list { display: grid; width: 100%; gap: 3px; margin-top: 5px; padding-top: 5px; border-top: 1px solid var(--line); }
+/* Les cartes de pièces tiennent sur une ligne : la ligne de set ne s'enroule pas */
+.piece-set-list .set-status-form { flex-wrap: nowrap; gap: 3px; }
+.piece-set-list .set-tag { flex: 1 1 auto; font-size: 12px; }
+.piece-set-list .set-tag small { font-size: 11px; }
+.piece-set-list .set-status-form .set-missing-count { flex: 0 0 auto; min-width: 15px; font-size: 15px; }
+.piece-set-list .set-status-form .set-step-button,
+.piece-set-list .set-status-form .set-complete-part { width: 34px; height: 34px; }
+.piece-set-list .set-status-form .set-step-button { font-size: 22px; }
+.piece-set-list .set-status-form .set-complete-part svg { width: 18px; height: 18px; }
+
+/* Ajout d'une pièce saisie à la main */
+.manual-add { border-top: 1px solid var(--line); }
+.manual-add summary { padding: 10px 13px; color: var(--purple); cursor: pointer; list-style: none; font-size: 12px; font-weight: 700; }
+.manual-add summary::-webkit-details-marker { display: none; }
+.manual-form { display: flex; align-items: end; flex-wrap: wrap; gap: 8px; padding: 0 13px 13px; }
+.manual-form label { display: grid; gap: 5px; color: var(--muted-strong); font-size: 12px; }
+/* Taille seulement : la teinte et la bordure du champ viennent de base.css */
+.manual-form input { width: 76px; height: 32px; padding: 0 7px; font-size: 12px; }
+.manual-form label:nth-child(2) input { width: 120px; }
+
+/* Sets encore à réunir, en haut de la page */
+.candidate-grid { margin-bottom: 20px; }
+.candidate-actions { display: flex; flex: 1 1 auto; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 5px; margin-left: auto; }
+.candidate-actions .button { min-height: 32px; padding: 0 10px; font-size: 12px; }
+.candidate-actions .button:disabled { opacity: .45; cursor: default; }
+.candidate-actions .candidate-complete-button { width: 32px; height: 32px; }
+.candidate-complete-button svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 2; }
+.candidate-complete-button:disabled { opacity: .4; cursor: default; }
+.collection-note { margin: -4px 0 20px; color: var(--muted); font-size: 12px; }

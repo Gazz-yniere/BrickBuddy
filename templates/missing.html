@@ -4,16 +4,16 @@
 {% block breadcrumb %}PIÈCES MANQUANTES{% endblock %}
 {% block content %}
   <section class="page-intro">
-    <div><div class="eyebrow"><span>✦</span> LA LISTE DE CHASSE</div><h1>Pièces manquantes</h1><p>Toutes les pièces qui manquent à l’ensemble de tes sets possédés, regroupées pour les chercher ou les commander.</p></div>
+    <div><h1>Pièces manquantes</h1><p>Toutes les pièces qui manquent à l’ensemble de tes sets possédés, regroupées pour les chercher ou les commander.</p></div>
     <div class="missing-total"><strong id="missing-parts-total">{{ parts|sum(attribute='missing') }}</strong><span>pièces à trouver</span></div>
   </section>
   <section class="toolbar-card">
     <form class="filter-form" method="get" action="{{ url_for('missing_page') }}">
       <label class="search-box"><span>⌕</span><input name="q" value="{{ search }}" placeholder="Chercher une pièce, un set, une couleur..." aria-label="Rechercher les pièces manquantes"></label>
-      <label class="select-label"><span>Couleur</span><select name="color"><option value="">Toutes les couleurs</option>{% for color in colors %}<option value="{{ color }}" {{ 'selected' if color_filter == color else '' }}>{{ color }}</option>{% endfor %}</select></label>
+      <label class="select-label"><span>Couleur</span><select name="color"><option value="">Toutes les couleurs</option>{% for color in colors %}<option value="{{ color.value }}" {{ 'selected' if color_filter == color.value else '' }}>{{ color.label }}</option>{% endfor %}</select></label>
       <label class="select-label"><span>Trier par</span><select name="sort"><option value="color" {{ 'selected' if sort_by == 'color' else '' }}>Couleur</option><option value="name" {{ 'selected' if sort_by == 'name' else '' }}>Nom de la pièce</option><option value="missing" {{ 'selected' if sort_by == 'missing' else '' }}>Quantité à trouver</option></select></label>
       <button class="button button-muted" type="submit">Appliquer</button>
-      {% if search or color_filter or sort_by != 'color' %}<a class="reset-link" href="{{ url_for('missing_page') }}">Effacer</a>{% endif %}
+      {% if search or color_filter or sort_by != 'color' %}<a class="reset-link" href="{{ url_for('missing_page') }}" data-dynamic>Effacer</a>{% endif %}
     </form>
   </section>
   {% if groups %}
@@ -25,7 +25,7 @@
             <span class="color-swatch {{ 'swatch-' ~ group.name|lower|replace(' ', '-') }}" title="{{ group.name }}"></span>
             <div class="color-heading"><h3>{{ group.name }}</h3><span>{{ group.parts|length }} référence{{ 's' if group.parts|length != 1 else '' }}</span></div>
             <span class="color-totals"><strong class="accent-missing" data-color-missing>{{ group.missing }}</strong><span class="part-total" data-color-total>/{{ group.quantity }}</span><span>pièces à trouver</span></span>
-            <span class="color-group-chevron" aria-hidden="true">⌄</span>
+            <span class="color-group-chevron" aria-hidden="true"></span>
           </summary>
           <div class="parts-grid">
             {% for part in group.parts %}

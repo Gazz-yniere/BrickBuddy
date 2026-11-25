@@ -7,12 +7,13 @@
   {% if fig_parts %}
     <details class="minifig-parts"{% if set_entry %} data-minifig-set="{{ set_entry.id }}" data-minifig-fig="{{ fig_num }}"{% endif %}>
       <summary class="minifig-parts-summary">
-        <span class="minifig-parts-chevron" aria-hidden="true">⌄</span>
+        <span class="minifig-parts-chevron" aria-hidden="true"></span>
         <span class="minifig-parts-label">Pièces de cette figurine{% if set_entry %} · {{ set_entry.set_num }}{% if set_entry.copy_count > 1 %} · #{{ set_entry.copy_number }}{% endif %}{% endif %}</span>
         <span class="minifig-parts-count">{{ fig_parts|length }} pièce{{ 's' if fig_parts|length != 1 else '' }}</span>
       </summary>
       <ul class="minifig-parts-list">
         {% for piece in fig_parts %}
+          {% set piece_hex = piece.color_name|lego_color_hex %}
           <li class="minifig-part{{ ' is-found' if set_entry and piece.missing_quantity == 0 else '' }}">
             <div class="part-image-wrap">
               {% if piece.image_url %}
@@ -20,7 +21,7 @@
               {% else %}
                 <span class="part-image part-placeholder" aria-hidden="true">▦</span>
               {% endif %}
-              <span class="minifig-part-meta" title="{{ piece.color_name }}"><span class="color-swatch swatch-{{ piece.color_name|lower|replace(' ', '-') }}" aria-hidden="true"></span><span class="minifig-part-color">{{ piece.color_name }}</span></span>
+              <span class="minifig-part-meta" title="{{ piece.color_name }}"{% if piece_hex %} style="--brick: {{ piece_hex }}"{% endif %}><span class="color-swatch swatch-{{ piece.color_name|lower|replace(' ', '-') }}" aria-hidden="true"></span><span class="minifig-part-color">{{ piece.color_name }}</span></span>
               <span class="part-image-label" title="{{ piece.part_name }}">{{ piece.part_name }}</span>
             </div>
             <div class="piece-card-heading">

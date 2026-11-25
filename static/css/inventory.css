@@ -1,0 +1,55 @@
+/* ============================================================
+   « Inventaire » : compteurs, chips d'origine, cartes de pièce, vrac
+   ============================================================ */
+
+/* Tuiles de compteurs réutilisables (inventaire, vérification, accueil) */
+.inv-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(72px, 1fr)); gap: 8px; width: 100%; max-width: 360px; }
+/* La tuile « valeur estimée » est plus longue : le bloc s'élargit pour elle. */
+.inv-stats:has(.stat-tile-price) { max-width: 420px; }
+.stat-tile { display: flex; flex-direction: column; gap: 2px; padding: 9px 11px; border: 1px solid var(--tile-line); border-radius: 9px; background: var(--field-bg); }
+.stat-tile strong { color: var(--ink); font: 700 19px var(--font-display); letter-spacing: -.4px; }
+.stat-tile span { color: var(--muted-strong); font-size: 11px; }
+.stat-tile-price strong { color: var(--price-ink); font-size: 16px; letter-spacing: -.6px; }
+/* Tuile de compte rendu des prix : même forme que les compteurs, texte court */
+.stat-tile-note { width: 100%; max-width: 420px; }
+.stat-tile-note strong { color: var(--price-ink); font: 600 13px var(--font-display); letter-spacing: 0; }
+
+.intro-side { display: flex; flex: 0 0 auto; flex-direction: column; align-items: flex-end; gap: 10px; min-width: 0; max-width: 100%; }
+.intro-side .button { width: fit-content; }
+.origin-legend { margin: 6px 0 0; color: var(--muted); font-size: 11px; line-height: 1.5; }
+
+/* Cartes de pièce : chaque emplacement (sets / vrac / réservé) sur sa ligne */
+.inventory-colors { display: grid; gap: 12px; }
+.inventory-parts { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); align-items: start; gap: 5px; padding: 5px; border-top: 1px solid var(--line); }
+.inventory-part-card > .minifig-parts { flex: 0 0 100%; width: 100%; margin-top: 8px; }
+.inventory-part-quantity { color: var(--ink); font: 700 16px var(--font-display); white-space: nowrap; }
+
+.part-alloc { display: flex; width: 100%; flex-direction: column; gap: 3px; margin-top: 5px; color: var(--muted); font-size: 11px; }
+.alloc-row { display: flex; min-width: 0; align-items: center; gap: 4px; white-space: nowrap; }
+.alloc-label { flex: 0 0 auto; padding: 1px 4px; border-radius: 4px; color: var(--muted-strong); background: var(--panel-deep); font-size: 9px; font-weight: 800; letter-spacing: .3px; text-transform: uppercase; }
+.alloc-sets .alloc-label { color: var(--accent-ink); background: var(--accent-deep); }
+.alloc-stock .alloc-label { padding: 0; color: var(--ink); font-size: 12px; font-weight: 400; letter-spacing: 0; text-transform: none; background: transparent; }
+.alloc-reserved .alloc-label { color: var(--purple); background: var(--accent-bg); }
+.alloc-price .alloc-label { color: var(--found-ink); background: var(--found-bg); }
+.alloc-price .alloc-value strong { color: var(--price-ink); }
+.alloc-value { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+
+/* Stepper du vrac, intégré à sa ligne */
+.alloc-stock { flex-wrap: wrap; gap: 3px; }
+.stock-stepper { display: flex; min-width: 0; flex: 1 1 auto; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 3px; }
+.stock-buttons { display: flex; flex: 0 0 auto; gap: 3px; margin-left: auto; }
+.stock-qty { min-width: 15px; color: var(--ink); font: 700 15px var(--font-display); text-align: center; font-variant-numeric: tabular-nums; }
+/* Dans le vrac, les boutons ronds sont un peu plus petits que sur une carte de set */
+.stock-stepper .set-step-button { width: 34px; height: 34px; font-size: 22px; }
+.stock-step-form, .stock-add-form { display: contents; margin: 0; }
+
+/* Panneau d'ajout de vrac : un bouton qui se déplie sur sa propre carte.
+   Il est plein largeur, comme les autres appels de la colonne. */
+.add-stock-panel { width: 100%; overflow: hidden; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); }
+.add-stock-panel summary { display: flex; min-height: 37px; align-items: center; justify-content: center; gap: 10px; padding: 0 14px; border: 0; border-radius: 10px; color: var(--white-bg); background: var(--purple-strong); box-shadow: 0 5px 15px var(--purple-shadow); font-size: 12px; font-weight: 700; cursor: pointer; list-style: none; }
+.add-stock-panel summary::-webkit-details-marker { display: none; }
+.add-stock-panel summary:hover { background: var(--purple-hover); }
+.add-stock-panel[open] summary { border-bottom: 1px solid var(--line); border-radius: 10px 10px 0 0; }
+.add-stock-form { display: grid; gap: 8px; padding: 12px 14px 14px; }
+.add-stock-form label { width: 100%; display: grid; gap: 5px; color: var(--muted-strong); font-size: 12px; font-weight: 700; }
+.add-stock-form button { width: 100%; min-height: 37px; }

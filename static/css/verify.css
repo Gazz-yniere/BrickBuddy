@@ -1,0 +1,44 @@
+/* ============================================================
+   « Vérifier un set » : bandeau, compteurs, lignes de pièces
+   ============================================================ */
+
+.verify-form { display: flex; flex-wrap: wrap; align-items: end; gap: 8px; }
+/* Largeur seulement : le fond et la bordure viennent de base.css */
+.verify-form input { min-width: 210px; flex: 1; }
+
+.verify-bandeau { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; padding: 14px 16px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); }
+.verify-set-img { width: 76px; height: 76px; flex: 0 0 76px; border: 1px solid var(--image-line); border-radius: 8px; background: var(--image-bg); object-fit: contain; }
+.verify-set-img-placeholder { display: grid; width: 76px; height: 76px; flex: 0 0 76px; place-items: center; border: 1px dashed var(--dashed-line); border-radius: 8px; color: var(--image-ink); background: var(--avatar-bg); font-size: 30px; }
+.verify-set-copy h2 { margin: 0 0 2px; font: 600 17px var(--font-display); }
+.verify-set-copy span { color: var(--muted); font-size: 12px; }
+
+.verify-summary { display: grid; grid-template-columns: repeat(4, 1fr); gap: 9px; margin-bottom: 16px; }
+.summary-tile { display: flex; flex-direction: column; gap: 3px; padding: 11px 13px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); }
+.summary-tile strong { color: var(--ink); font: 700 20px var(--font-display); }
+.summary-tile span { color: var(--muted-strong); font-size: 11px; }
+
+.verify-list-title { display: flex; align-items: center; gap: 8px; margin: 24px 0 10px; font: 600 15px var(--font-display); }
+.verify-list-title span { padding: 4px 7px; border-radius: 5px; color: var(--accent-ink); background: var(--accent-bg); font: 600 12px var(--font-body); }
+
+.verify-list { display: flex; flex-direction: column; gap: 8px; }
+.verify-row { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border: 1px solid var(--line); border-radius: 9px; background: var(--panel); }
+.verify-row-thumb { display: grid; width: 56px; height: 56px; flex: 0 0 56px; place-items: center; overflow: hidden; border: 1px solid var(--image-line); border-radius: 7px; color: var(--image-ink); background: var(--image-bg); font-size: 18px; }
+.verify-row-thumb img { width: 100%; height: 100%; object-fit: contain; }
+.verify-row-copy { display: grid; min-width: 0; flex: 1; gap: 2px; }
+.verify-row-copy strong { overflow: hidden; color: var(--ink); font-size: 13px; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+.verify-row-copy span { overflow: hidden; color: var(--muted-strong); font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+.verify-row-qty { display: flex; align-items: center; gap: 12px; font-size: 12px; }
+.verify-qty { display: flex; min-width: 44px; flex-direction: column; gap: 1px; }
+.verify-qty strong { color: var(--ink); font: 700 14px var(--font-display); font-variant-numeric: tabular-nums; }
+.verify-qty span { color: var(--muted); font-size: 11px; }
+
+/* Pastille « manque » / « trouve » : la teinte vient des accents de la feuille */
+.verify-badge { display: inline-flex; min-width: 26px; height: 20px; align-items: center; justify-content: center; padding: 0 7px; border: 1px solid transparent; border-radius: 10px; font-size: 11px; font-weight: 800; }
+.verify-badge.accent-missing { border-color: var(--missing-color); color: var(--missing-color); background: color-mix(in srgb, var(--missing-color) 14%, transparent); }
+.verify-badge.accent-found { border-color: var(--found-color); color: var(--found-color); background: color-mix(in srgb, var(--found-color) 14%, transparent); }
+
+.verify-cta { display: flex; flex-direction: column; gap: 8px; margin-top: 6px; }
+.verify-note { margin: 0; color: var(--muted); font-size: 12px; line-height: 1.6; }
+
+/* Message d'erreur du service (set inconnu, clé absente) */
+.notice-card { margin-bottom: 14px; padding: 12px 15px; border: 1px solid var(--danger-line); border-radius: 10px; background: var(--danger-bg); color: var(--danger-ink); font-size: 13px; line-height: 1.6; }

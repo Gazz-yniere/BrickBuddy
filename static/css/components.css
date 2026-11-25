@@ -1,0 +1,221 @@
+/* ============================================================
+   Composants partagés : filtres, pastilles d'origine, compteurs,
+   cartes, chevrons, visuels agrandis, figurines, boutons d'action, popin.
+   ============================================================ */
+
+/* Barre de filtres en haut d'une page */
+.toolbar-card { margin-bottom: 21px; padding: 11px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); }
+.filter-form { display: flex; align-items: end; gap: 9px; }
+.search-box { position: relative; display: flex; min-width: 180px; flex: 1; align-items: center; }
+.search-box > span { position: absolute; left: 12px; z-index: 1; color: var(--muted); font-size: 20px; transform: rotate(-20deg); }
+.search-box input { padding-left: 36px; }
+.select-label { display: grid; min-width: 140px; gap: 5px; color: var(--muted-strong); font-size: 12px; font-weight: 700; }
+.filter-form .select-label { min-width: 184px; }
+.reset-link { padding: 0 4px 10px 0; color: var(--purple); font-size: 12px; }
+
+/* Pastilles d'origine (inventaire, pièces à réunir) */
+.origin-chips { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.chip-label { color: var(--muted-strong); font-size: 11px; font-weight: 800; letter-spacing: 1.2px; }
+.origin-chip { display: inline-flex; min-height: 28px; align-items: center; gap: 6px; padding: 0 10px; border: 1px solid var(--line); border-radius: 20px; background: var(--panel); color: var(--muted); font-size: 12px; font-weight: 800; }
+.origin-chip:hover { border-color: var(--purple-strong); color: var(--ink); }
+.origin-chip.is-active { border-color: var(--purple-strong); background: var(--accent-warm); color: var(--purple); }
+.origin-chip.is-loading { opacity: .7; }
+
+/* Titres de section et leur compteur */
+.results-heading { display: flex; align-items: center; justify-content: space-between; margin: 25px 1px 11px; }
+.results-heading h2 { display: flex; align-items: center; gap: 9px; margin: 0; font: 600 15px var(--font-display); }
+.results-heading h2 span { padding: 4px 7px; border-radius: 5px; color: var(--accent-ink); background: var(--accent-bg); font: 600 12px var(--font-body); }
+.results-heading > span { color: var(--muted); font-size: 12px; }
+.section-heading { display: flex; align-items: end; justify-content: space-between; margin-bottom: 13px; }
+.section-heading h2 { margin: 6px 0 0; font: 600 18px var(--font-display); }
+.heading-count { display: inline-grid; min-width: 20px; height: 20px; place-items: center; margin-left: 5px; padding: 0 5px; border-radius: 5px; color: var(--accent-ink); background: var(--accent-bg); font: 600 12px var(--font-body); }
+
+/* Carte partagée : groupe de couleur, set, pièce */
+.color-card, .set-card { min-width: 0; border: 1px solid var(--line); border-radius: 11px; background: var(--panel); }
+/* Un visuel agrandé doit sortir de sa carte : rien ne le coupe */
+.color-card, .collection-theme, .collection-set-card, .inventory-color { overflow: visible; }
+/* Une carte ne monte au-dessus de sa voisine que si on survole son image */
+.color-card, .piece-card, .inventory-part-card, .minifig-part, .set-card, .collection-set-card { position: relative; }
+/* Chaque carte d'image est son propre contexte d'empilement : son étiquette
+   ne passe jamais au-dessus du visuel agrandé de la carte voisine. */
+.part-image-wrap, .piece-card, .inventory-part-card, .minifig-part, .set-avatar, .collection-set-image { isolation: isolate; }
+.color-card:has(.part-image:hover), .piece-card:has(.part-image-wrap:hover),
+.inventory-part-card:has(.part-image-wrap:hover), .set-card:has(.set-avatar img:hover, .set-avatar img:focus-visible),
+.collection-set-card:has(.collection-set-image:hover, .collection-set-image:focus-visible) { z-index: 20; }
+
+/* Carte de pièce : même forme sur « Pièces à réunir », « Manquantes », « Inventaire » */
+.piece-card, .inventory-part-card { display: flex; width: 100%; min-width: 0; flex-direction: column; align-items: center; padding: 4px; border: 1px solid var(--tile-line); border-radius: 8px; background: var(--tile); }
+.piece-card-heading { display: flex; width: 100%; align-items: center; justify-content: space-between; gap: 8px; margin-top: 5px; }
+.piece-card-heading > strong { color: var(--ink); font: 700 14px var(--font-display); }
+
+/* En-tête teinté d'un groupe de couleur (la teinte vient de --brick) */
+.color-card > .color-header { border-radius: 10px; cursor: pointer; list-style: none; }
+.color-card > .color-header::-webkit-details-marker { display: none; }
+.color-card[open] > .color-header { border-radius: 10px 10px 0 0; }
+.color-header { display: flex; min-height: 70px; align-items: center; gap: 13px; padding: 13px 18px; border-bottom: 1px solid var(--line); background: var(--panel-raised); }
+.color-header[style*="--brick"], .collection-color-header[style*="--brick"] {
+  background-image: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--brick) 22%, transparent),
+    color-mix(in srgb, var(--brick) 6%, transparent) 55%,
+    transparent
+  );
+}
+.color-header[style*="--brick"] .color-heading h3,
+.color-header[style*="--brick"] .color-totals strong { text-shadow: 0 0 7px var(--shadow-text); }
+.color-header[style*="--brick"] .color-totals {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  padding: 2px 9px;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--brick) 14%, transparent);
+  white-space: nowrap;
+}
+
+/* Chevron des blocs repliables : un chevron seul, centré, teinté au survol et ouvert */
+.collection-set-chevron, .collection-color-chevron, .color-group-chevron, .minifig-parts-chevron {
+  display: inline-flex; flex: 0 0 14px; width: 14px; height: 14px;
+  align-items: center; justify-content: center; color: var(--muted-strong);
+  transition: transform .16s ease, color .16s ease;
+}
+.collection-set-chevron::before, .collection-color-chevron::before,
+.color-group-chevron::before, .minifig-parts-chevron::before {
+  content: ""; width: 9px; height: 9px; border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor; border-radius: 2px; transform: rotate(45deg);
+}
+summary:hover .collection-set-chevron, summary:hover .collection-color-chevron,
+summary:hover .color-group-chevron, summary:hover .minifig-parts-chevron { color: var(--purple); }
+details[open] > summary .collection-set-chevron, details[open] > summary .collection-color-chevron,
+details[open] > summary .color-group-chevron, details[open] > summary .minifig-parts-chevron { color: var(--purple); transform: rotate(180deg); }
+
+/* Visuels : cadre clair, zoom au survol, ombre adoucie, fond opaque */
+.part-image-wrap { position: relative; width: 100%; max-width: 220px; aspect-ratio: 1 / 1; flex: 0 0 auto; border: 1px solid var(--image-line); border-radius: 7px; background: var(--image-bg); transition: transform .18s ease, box-shadow .18s ease; }
+.part-image { display: grid; width: 100%; height: 100%; place-items: center; object-fit: contain; border-radius: inherit; color: var(--image-ink); font-size: 22px; }
+.part-image-wrap:hover { z-index: 10; transform: scale(1.5); box-shadow: 0 6px 16px var(--shadow-image); }
+.part-image-label { position: absolute; z-index: 11; right: 0; bottom: 0; left: 0; max-height: 48%; overflow: hidden; padding: 12px 5px 5px; border-radius: 0 0 6px 6px; color: var(--ink); background: var(--label-bg); font-size: 12px; line-height: 1.25; text-align: center; text-overflow: ellipsis; }
+/* Pièce entièrement trouvée : seule l'image se fonce (textes, boutons, survol inchangés) */
+.is-found .part-image, .part-done .collection-part-image { filter: grayscale(1) brightness(0.4); }
+
+/* Image d'un set, agrandie au survol sans sortir de sa carte */
+.collection-set-image { display: grid; width: 58px; height: 48px; flex: 0 0 58px; place-items: center; object-fit: contain; border: 1px solid var(--image-line); border-radius: 8px; background: var(--image-bg); transform-origin: center; transition: transform .18s ease, box-shadow .18s ease; }
+.collection-set-image:hover, .collection-set-image:focus-visible { z-index: 10; transform: scale(4); box-shadow: 0 6px 16px var(--shadow-image); }
+.collection-set-image-placeholder { color: var(--purple); background: linear-gradient(140deg, var(--placeholder-from), var(--placeholder-to)); font-size: 23px; }
+
+/* Carte d'une figurine : l'image reste dans sa carte, quelle que soit la vignette */
+.minifig-parts { grid-column: 1 / -1; width: 100%; border-top: 1px solid var(--line); margin-top: 8px; }
+.minifig-parts-summary { display: flex; align-items: center; gap: 6px; padding: 6px 4px 6px 0; cursor: pointer; list-style: none; color: var(--muted); font: 600 11px var(--font-display); }
+.minifig-parts-summary::-webkit-details-marker { display: none; }
+.minifig-parts-summary:hover, .minifig-parts-summary:focus-visible { color: var(--accent-ink); outline: none; }
+.minifig-parts-label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.minifig-parts-count { flex: 0 0 auto; color: var(--muted); font-size: 12px; }
+.minifig-parts-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 156px), 1fr)); gap: 8px; margin: 0; padding: 8px 0 0; list-style: none; }
+.minifig-part { display: flex; min-width: 0; flex-direction: column; align-items: center; gap: 5px; padding: 4px; border: 1px solid var(--tile-line); border-radius: 8px; background: var(--tile); }
+/* L'image d'une figurine est plafonnée : la vignette ne déborde jamais de la carte */
+.minifig-part .part-image-wrap { width: 100%; max-width: 132px; }
+.minifig-part .part-image-label { display: -webkit-box; max-height: none; overflow: hidden; padding: 5px; background: var(--label-bg); font-size: 11px; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow-wrap: anywhere; }
+.minifig-part-meta { position: absolute; z-index: 11; top: 0; right: 0; left: 0; display: flex; align-items: center; gap: 4px; min-width: 0; padding: 4px 5px; border-radius: 6px 6px 0 0; color: var(--ink); background: var(--label-bg); font-size: 11px; line-height: 1.2; }
+.minifig-part-color { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.minifig-part-meta .color-swatch { width: 10px; height: 10px; flex: 0 0 10px; border-width: 1px; }
+.minifig-part-missing-total { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: flex-end; gap: 4px; }
+.minifig-part-missing-total strong { font: 700 20px/1 var(--font-display); }
+.minifig-part-missing-total span { color: var(--muted); font-size: 12px; }
+.minifig-part-quantity { color: var(--muted); font-size: 12px; }
+.minifig-part-status-form { display: flex; width: 100%; align-items: center; justify-content: flex-end; gap: 3px; margin-top: auto; padding-top: 5px; border-top: 1px solid var(--line); }
+.minifig-part-status-form .set-missing-count { margin-right: auto; font-size: 15px; }
+/* Dans une vignette de figurine, les boutons ronds se réduisent à 34 px */
+.minifig-part-status-form .set-step-button, .minifig-part-status-form .set-complete-part { width: 34px; height: 34px; }
+
+/* Ligne de référence d'un set : présente sur « Pièces à réunir », « Mes sets », l'inventaire */
+.set-status-form { display: flex; width: 100%; min-width: 0; align-items: center; gap: 5px; padding: 0; border: 0; background: transparent; }
+.set-tag { display: flex; min-width: 0; flex: 1; flex-direction: column; align-items: flex-start; gap: 1px; overflow: hidden; color: var(--ink); font-size: 13px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+.set-tag small { max-width: 100%; overflow: hidden; color: var(--muted); font-size: 12px; font-weight: 400; text-overflow: ellipsis; white-space: nowrap; }
+.set-tag .set-meta { color: var(--muted); }
+.set-missing-count { min-width: 22px; color: var(--missing-color); text-align: center; font: 700 19px var(--font-display); }
+.set-status-form.is-complete .set-tag,
+.set-status-form.is-complete .set-tag small,
+.set-status-form.is-complete .set-missing-count { color: var(--found-color); }
+.set-list-multi { display: contents; }
+
+/* Carte de set (Mes sets et les sets à réunir) */
+.set-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; gap: 12px; }
+.set-header { display: flex; flex-wrap: wrap; align-items: center; gap: 9px; row-gap: 7px; padding: 12px; border-bottom: 1px solid var(--line); }
+.set-avatar { display: grid; width: 44px; height: 44px; flex: 0 0 44px; place-items: center; color: var(--accent-ink); background: var(--avatar-bg); font: 700 14px var(--font-display); }
+.set-avatar img { position: relative; z-index: 1; width: 100%; height: 100%; border-radius: 7px; object-fit: contain; background: var(--image-bg); transform-origin: center; transition: transform .18s ease, box-shadow .18s ease; }
+.set-avatar img:hover, .set-avatar img:focus-visible { z-index: 10; background: var(--image-bg); transform: scale(3); box-shadow: 0 6px 16px var(--shadow-image); }
+.set-title { flex: 1 1 160px; min-width: 0; }
+.set-title h3 { margin: 0 0 3px; overflow: hidden; font: 600 13px var(--font-display); text-overflow: ellipsis; white-space: nowrap; }
+.set-title > span { color: var(--muted); font-size: 12px; }
+.set-progress { display: inline-flex; align-items: baseline; gap: 4px; min-width: 62px; flex: 0 0 auto; justify-content: flex-end; color: var(--missing-color); white-space: nowrap; }
+.set-progress strong { font: 700 13px var(--font-display); }
+.set-progress span { color: var(--muted); font-size: 11px; }
+/* Pastille « notice disponible », visible sans déplier la carte */
+.set-instructions { display: inline-flex; align-items: center; gap: 5px; padding: 4px 9px; border: 1px solid var(--found-line); border-radius: 999px; color: var(--found-color); background: var(--found-bg); font-size: 11px; font-weight: 700; white-space: nowrap; }
+.set-instructions.is-empty { border-color: var(--tile-line); color: var(--muted); background: var(--panel); }
+
+/* Boutons d'action réduits à leur icône */
+.icon-button { border: 0; color: var(--muted); background: transparent; cursor: pointer; }
+
+/* Boutons ronds d'action, taille tactile commune (+, −, cocher) */
+.set-step-button, .set-complete-part { display: grid; flex: 0 0 auto; place-items: center; padding: 0; aspect-ratio: 1; width: 40px; height: 40px; border-radius: 50%; box-sizing: border-box; }
+.set-step-button { border: 0; color: var(--step-ink); background: var(--step-bg); font-size: 24px; line-height: 1; }
+.set-step-button:hover:not(:disabled) { color: var(--ink); background: var(--step-hover); }
+.set-step-button:disabled { opacity: .35; cursor: default; }
+.set-step-button[value="1"] { border: 0; }
+.set-complete-part { border: 1px solid var(--found-line); color: var(--found-ink); background: var(--found-bg); font-size: 12px; font-weight: 700; }
+.set-complete-part svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 2; }
+.set-complete-part:hover:not(:disabled) { background: var(--found-hover); }
+.set-complete-part:disabled { opacity: .5; cursor: default; }
+/* Set ou figurine entièrement complété : le bouton se colore en vert */
+.set-status-form.is-complete .set-step-button[value="1"],
+.collection-part-controls.is-complete .set-step-button[value="1"] { color: var(--on-found); background: var(--found-color); }
+.set-status-form.is-complete .set-step-button[value="1"]:hover { background: var(--found-bright); }
+
+/* Boutons « ajouter un exemplaire » et « retirer » d'une carte de set */
+.set-copy-button { display: grid; width: 30px; height: 30px; place-items: center; border: 1px solid var(--accent-line); border-radius: 50%; color: var(--accent-ink); background: var(--accent-bg); font-size: 19px; line-height: 1; }
+.set-copy-button:hover { border-color: var(--control-hover-line); background: var(--accent-hover); }
+.set-copy-button svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.7; }
+.set-list-remove { display: grid; width: 30px; height: 30px; place-items: center; border: 1px solid var(--quiet-line); border-radius: 50%; color: var(--muted-strong); background: var(--remove-bg); font-size: 20px; line-height: 1; }
+.set-list-remove:hover { border-color: var(--danger); color: var(--white-bg); background: var(--danger); }
+.candidate-complete-button { display: grid; width: 32px; height: 32px; place-items: center; }
+
+/* Note « en vrac / trouvé » sous une pièce */
+.stock-hint { display: flex; width: 100%; align-items: center; justify-content: space-between; gap: 6px; margin-top: 6px; font-size: 11px; font-weight: 700; }
+.stock-hint[hidden] { display: none; }
+.stock-hint form { margin: 0; }
+.stock-hint > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.stock-hint .button { flex: 0 0 auto; white-space: nowrap; }
+.stock-hint .stock-take-button { width: 34px; height: 34px; }
+.stock-enough > span { color: var(--found-color); }
+.stock-partial > span { color: var(--accent-ink); }
+
+/* Carte d'appel « ajouter un set » en haut d'une page */
+.add-set-card { display: flex; align-items: center; gap: 12px; margin: 0 0 31px; padding: 15px; border: 1px solid var(--line); border-radius: 11px; background: linear-gradient(140deg, var(--panel-raised), var(--panel)); }
+.add-set-icon { display: grid; width: 38px; height: 38px; flex: 0 0 38px; place-items: center; border-radius: 10px; color: var(--accent-ink); background: var(--accent-deep); font-size: 22px; }
+.add-set-copy { flex: 1; }
+.add-set-copy h2 { margin: 0 0 4px; font: 600 13px var(--font-display); }
+.add-set-copy p { margin: 0; color: var(--muted); font-size: 12px; }
+.add-form { display: flex; flex-wrap: wrap; gap: 7px; }
+/* Largeur seulement : le champ garde le fond et la bordure de base.css */
+.add-form input { width: 195px; flex: 1 1 160px; }
+
+/* Popin de confirmation */
+.confirm-dialog { width: min(420px, calc(100vw - 32px)); padding: 0; border: 1px solid var(--dialog-line); border-radius: 14px; color: var(--ink); background: var(--dialog-bg); box-shadow: 0 22px 70px var(--shadow-veil); }
+.confirm-dialog::backdrop { background: var(--shadow-veil); backdrop-filter: blur(3px); }
+.confirm-dialog-content { display: grid; justify-items: start; gap: 10px; padding: 20px 22px; }
+/* L'alerte se lit sur la ligne des boutons, pas en gros badge */
+.confirm-dialog-actions { display: flex; width: 100%; align-items: center; justify-content: flex-end; gap: 10px; margin-top: 6px; }
+.confirm-dialog-icon { display: grid; width: 22px; height: 22px; place-items: center; border: 1px solid var(--dialog-icon-line); border-radius: 50%; color: var(--dialog-icon-ink); background: var(--dialog-icon-bg); font-size: 12px; font-weight: 800; }
+.confirm-dialog h2 { margin: 0; font: 600 17px var(--font-display); }
+.confirm-dialog p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.6; }
+
+/* État vide d'une page */
+.empty-state { display: grid; justify-items: center; margin-top: 14px; padding: 50px 15px; border: 1px dashed var(--dashed-line); border-radius: 11px; background: var(--panel-deep); text-align: center; }
+.empty-emoji { margin-bottom: 13px; font-size: 30px; }
+.empty-state h2 { margin: 0 0 7px; font: 600 18px var(--font-display); }
+.empty-state p { margin: 0 0 15px; color: var(--muted); font-size: 12px; }
+.empty-parts { display: flex; align-items: center; gap: 10px; padding: 17px 13px; color: var(--muted-strong); }
+.empty-parts > span { font-size: 20px; }
+.empty-parts div { display: grid; gap: 4px; }
+.empty-parts strong { color: var(--ink); font-size: 12px; }
+.empty-parts small { color: var(--muted); font-size: 12px; }

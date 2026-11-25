@@ -1,0 +1,54 @@
+/* ============================================================
+   Primitives : boutons, champs, messages, roue de chargement.
+   Le reset et le squelette sont dans critical.css ; les couleurs
+   viennent de variables.css.
+   ============================================================ */
+
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+
+/* Boutons */
+.button { display: inline-flex; min-height: 37px; align-items: center; justify-content: center; gap: 10px; padding: 0 14px; border: 0; border-radius: 8px; font-size: 12px; font-weight: 700; transition: .16s ease; }
+.button-primary { color: var(--white-bg); background: var(--purple-strong); box-shadow: 0 5px 15px var(--purple-shadow); }
+.button-primary:hover { background: var(--purple-hover); transform: translateY(-1px); }
+.button-primary span { font-size: 14px; }
+.button-muted { min-width: 78px; color: var(--muted-button-ink); background: var(--muted-button-bg); }
+.button-muted:hover { background: var(--muted-button-hover); }
+.button-outline { min-height: 32px; border: 1px solid var(--accent-line); color: var(--accent-ink); background: var(--outline-bg); }
+.button-outline:hover { border-color: var(--control-hover-line); background: var(--accent-hover); }
+.button-small { min-height: 29px; padding: 0 11px; color: var(--white-bg); background: var(--purple-strong); }
+.button-small:hover { background: var(--purple-hover); }
+.button-danger { color: var(--white-bg); background: var(--danger); }
+.button-danger:hover { background: var(--danger-hover); }
+.button:disabled { opacity: .45; cursor: default; }
+
+/* Roue de chargement posée dans le bouton pendant l'action */
+.button-spinner { display: none; width: 14px; height: 14px; flex: 0 0 14px; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: brickbuddy-spin .7s linear infinite; }
+.is-loading > .button-spinner, .is-loading .button-spinner { display: inline-block; }
+.is-loading { pointer-events: none; opacity: .85; }
+@keyframes brickbuddy-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .button-spinner { animation-duration: 2.4s; } }
+
+/* Compteurs colorés : seul le nombre porte la teinte */
+.accent-missing { color: var(--missing-color) !important; font-weight: 800; }
+.accent-found { color: var(--found-color) !important; }
+
+/* Champs : une seule teinte de fond pour toute l'application */
+.search-box input, .add-form input, .manual-form input,
+.add-stock-form input, .add-stock-form select,
+.verify-form input, .select-label select, .setting-field input[type="password"],
+.login-form input {
+  width: 100%; min-width: 0; height: 37px; border: 1px solid var(--field-line);
+  border-radius: 7px; outline: none; padding: 0 11px; color: var(--ink);
+  background: var(--field-bg); font-size: 12px;
+}
+.select-label select { padding: 0 28px 0 10px; }
+/* Le contour au survol d'un champ écrase la bordure de la carte : !important. */
+input:focus, select:focus { border-color: var(--purple-strong) !important; box-shadow: 0 0 0 3px color-mix(in srgb, var(--purple-strong) 25%, transparent); }
+input::placeholder { color: var(--placeholder); }
+
+/* Messages d'action, en haut de la zone de résultats */
+.flash-stack { display: grid; gap: 7px; padding-top: 13px; }
+#interaction-messages[hidden] { display: none; }
+.flash { padding: 10px 13px; border-radius: 8px; font-size: 12px; }
+.flash.success { border: 1px solid var(--success-line); color: var(--success-ink); background: var(--success-bg); }
+.flash.error { border: 1px solid var(--danger-line); color: var(--danger-ink); background: var(--danger-bg); }

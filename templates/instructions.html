@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Construire {{ set.set_num }}{% endblock %}
+{% block breadcrumb %}NOTICE DE MONTAGE{% endblock %}
+{% block content %}
+  {% set unsaved = official|rejectattr('saved')|list if official is not none else [] %}
+  <section class="page-intro">
+    <div><h1>{{ set.title }}</h1><p>Notices du set {{ set.set_num }} · partagées entre tous ses exemplaires.</p></div>
+    <a class="button button-outline" href="{{ url_for('sets_page') }}">Mes sets</a>
+  </section>
+
+  <section class="instruction-panel" data-instruction-panel data-instruction-search data-search-url="{{ url_for('search_instructions', set_id=set.id) }}"{% if auto_search %} data-auto-search="1"{% endif %}>
+    <div class="instruction-panel-head">
+      <h2>Notices du set</h2>
+      <div class="instruction-head-row">
+        <div class="instruction-head" data-instruction-head>{% include "_instruction_head.html" %}</div>
+        <span class="instruction-search-status" data-search-status role="status" aria-live="polite"></span>
+      </div>
+    </div>
+    <div class="instruction-carousel" data-instruction-carousel>
+      <a class="button button-outline instruction-carousel-arrow" href="{{ url_for('set_instructions', set_id=set.id, notice=previous_manual.id) if previous_manual else '' }}" aria-label="Notice précédente" data-carousel-arrow="previous"{% if manuals|length < 2 %} hidden{% endif %}>←</a>
+      <div class="instruction-carousel-track" data-carousel-track tabindex="0" role="group" aria-label="Notices de ce set, utilise les flèches du clavier pour changer de notice">
+        {% for manual in manuals %}
+          {% set index = loop.index %}
+          {% set current = selected and selected.id == manual.id %}
+          {% include "_instruction_card.html" %}
+        {% endfor %}
+        {% for instruction in unsaved %}
+          {% include "_instruction_download_tile.html" %}
+        {% endfor %}
+      </div>
+      <a class="button button-outline instruction-carousel-arrow" href="{{ url_for('set_instructions', set_id=set.id, notice=next_manual.id) if next_manual else '' }}" aria-label="Notice suivante" data-carousel-arrow="next"{% if manuals|length < 2 %} hidden{% endif %}>→</a>
+    </div>
+  </section>
+
+  <section class="instruction-panel instruction-viewer-band{% if not selected %} is-hidden{% endif %}" aria-label="Lecteur de la notice">
+    <p class="instruction-viewer-note">Si la notice ne s'affiche pas, utilise « Ouvrir » pour la lire dans le navigateur.</p>
+    <div class="instruction-viewer-shell" data-pdf-viewer>
+      <iframe class="instruction-viewer" title="Notice {{ selected.filename }}" {% if selected %}src="{{ url_for('instruction_pdf', set_id=set.id, notice_id=selected.id) }}#page=1&amp;view=FitH&amp;navpanes=0"{% endif %}></iframe>
+      <div class="instruction-viewer-loading">
+        <span class="button-spinner" aria-hidden="true"></span>
+        <span>Chargement de la notice…</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="instruction-panel">
+    <h2>Ajout manuel d'une notice</h2>
+    <p>Ajoute un PDF depuis ton appareil, un fichier à la fois (200 Mo maximum). Pour une notice en plusieurs livres, ajoute chaque fichier.</p>
+    <form class="instruction-upload" action="{{ url_for('upload_instruction', set_id=set.id) }}" method="post" enctype="multipart/form-data">
+      <input type="hidden" name="csrf_token" value="{{ session.csrf_token }}">
+      <div class="instruction-dropzone" data-dropzone>
+        <input id="notice" name="notice" type="file" accept=".pdf,application/pdf" required data-file-input aria-label="Fichier PDF de la notice">
+        <span class="instruction-dropzone-pick" aria-hidden="true">Choisir un PDF</span>
+        <span class="instruction-dropzone-hint" data-file-name aria-live="polite">Aucun fichier choisi</span>
+      </div>
+      <button class="button button-primary" type="submit" disabled>Ajouter</button>
+    </form>
+  </section>
+{% endblock %}

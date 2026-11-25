@@ -4,7 +4,7 @@
 {% block breadcrumb %}PIÈCES À RÉUNIR{% endblock %}
 {% block content %}
   <section class="page-intro">
-    <div><div class="eyebrow"><span>✦</span> LE GRAND TRI</div><h1>Pièces à réunir</h1><p>Choisis les sets dont tu recherches les pièces. Ce suivi est indépendant de ta collection.</p></div>
+    <div><h1>Pièces à réunir</h1><p>Choisis les sets dont tu recherches les pièces. Ce suivi est indépendant de ta collection.</p></div>
   </section>
 
   <section class="add-set-card" id="ajouter">
@@ -25,9 +25,10 @@
               <div class="set-title"><h3>{{ set.title }}{% if set.copy_count > 1 %} · exemplaire {{ set.copy_number }}{% endif %}</h3><span>Réf. {{ set.set_num }} · {{ set.total }} pièces{% if set.year %} · {{ set.year }}{% endif %}{% if set.theme_name and set.theme_name != 'Thème non renseigné' %} · {{ set.theme_name }}{% endif %}{% if set.in_collection %} · Dans Mes sets{% endif %}</span></div>
               <div class="set-progress"><strong>{{ set.missing }}</strong><span>à réunir</span></div>
               <div class="candidate-actions">
+                <a class="button button-outline button-small" href="{{ url_for('set_instructions', set_id=set.id, construire=1) }}" data-build-instructions>Construire</a>
                 {% if has_api_key %}<form action="{{ url_for('refresh_set_inventory', set_id=set.id) }}" method="post"><input type="hidden" name="return_to" value="pieces"><button class="icon-button" type="submit" title="Réimporter l'inventaire du set depuis Rebrickable" aria-label="Actualiser l'inventaire de {{ set.title }}">↻</button></form>{% endif %}
                 <form action="{{ url_for('duplicate_set', set_id=set.id) }}" method="post"><input type="hidden" name="return_to" value="pieces"><button class="icon-button set-copy-button copy-add" type="submit" title="Ajouter un exemplaire" aria-label="Ajouter un exemplaire de {{ set.title }}">+</button></form>
-                <form action="{{ url_for('update_set_gathering', set_id=set.id) }}" method="post"><input type="hidden" name="return_to" value="pieces"><input type="hidden" name="in_gathering" value="0"><button class="icon-button set-list-remove" type="submit" title="Retirer ce set de la recherche" aria-label="Retirer {{ set.title }} de la liste à réunir">×</button></form>
+                {% if not set.in_collection %}<form action="{{ url_for('update_set_gathering', set_id=set.id) }}" method="post" data-confirm data-confirm-title="Retirer ce set" data-confirm-message="Retirer ce set et ses pièces ? Il n'est dans Mes sets ni en recherche."><input type="hidden" name="return_to" value="pieces"><input type="hidden" name="in_gathering" value="0"><button class="icon-button set-list-remove" type="submit" title="Retirer ce set et ses pièces" aria-label="Retirer {{ set.title }} de la liste à réunir">×</button></form>{% else %}<form action="{{ url_for('update_set_gathering', set_id=set.id) }}" method="post"><input type="hidden" name="return_to" value="pieces"><input type="hidden" name="in_gathering" value="0"><button class="icon-button set-list-remove" type="submit" title="Retirer ce set de la recherche" aria-label="Retirer {{ set.title }} de la liste à réunir">×</button></form>{% endif %}
                 <form action="{{ url_for('complete_set_parts', set_id=set.id) }}" method="post">
                   <button class="icon-button set-copy-button candidate-complete-button" type="submit" title="{{ 'Tout trouvé' if set.missing else 'Tout chercher' }}" aria-label="{{ 'Marquer toutes les pièces comme trouvées' if set.missing else 'Remettre toutes les pièces à chercher' }}" {{ 'disabled' if not set.part_count else '' }}>
                     <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
@@ -58,7 +59,7 @@
       <label class="select-label"><span>Couleur</span>
         <select name="color">
           <option value="">Toutes les couleurs</option>
-          {% for color in colors %}<option value="{{ color }}" {{ 'selected' if color_filter == color else '' }}>{{ color }}</option>{% endfor %}
+          {% for color in colors %}<option value="{{ color.value }}" {{ 'selected' if color_filter == color.value else '' }}>{{ color.label }}</option>{% endfor %}
         </select>
       </label>
       <label class="select-label"><span>Trier par</span>
@@ -70,7 +71,7 @@
         </select>
       </label>
       <button class="button button-muted" type="submit">Appliquer</button>
-      {% if search or color_filter or sort_by != 'color' %}<a class="reset-link" href="{{ url_for('pieces_page') }}">Effacer</a>{% endif %}
+      {% if search or color_filter or sort_by != 'color' %}<a class="reset-link" href="{{ url_for('pieces_page') }}" data-dynamic>Effacer</a>{% endif %}
     </form>
   </section>
 
@@ -83,12 +84,12 @@
             <span class="color-swatch {{ 'swatch-' ~ group.name|lower|replace(' ', '-') }}" title="{{ group.name }}"></span>
             <div class="color-heading"><h3>{{ group.name }}</h3><span>{{ group.parts|length }} référence{{ 's' if group.parts|length != 1 else '' }}</span></div>
             <span class="color-totals"><strong class="{{ 'accent-found' if group.missing == 0 else 'accent-missing' }}" data-color-missing>{{ group.missing }}</strong><span class="part-total" data-color-total>/{{ group.quantity }}</span><span>pièces à trouver</span></span>
-            <span class="color-group-chevron" aria-hidden="true">⌄</span>
+            <span class="color-group-chevron" aria-hidden="true"></span>
           </summary>
           <div class="parts-grid">
             {% for part in group.parts %}
                 {% set set_count = part.sets|length %}
-                <article class="piece-card{{ ' is-found' if part.missing == 0 else '' }}">
+                <article class="piece-card{{ ' is-found' if part.missing == 0 else '' }}" data-gathering-order="{{ part.gathering_order }}">
                 <div class="part-image-wrap">
                   {% if part.image_url %}<img class="part-image" src="{{ part.image_url|local_image_url }}" alt="{{ part.part_name }}" loading="lazy">{% else %}<div class="part-image part-placeholder">▦</div>{% endif %}
                   <span class="part-image-label">{{ part.part_name }}</span>
@@ -137,9 +138,4 @@
   {% else %}
     <section class="empty-state"><div class="empty-emoji">🧩</div><h2>{% if search or color_filter %}Aucune pièce trouvée{% else %}Aucune pièce à réunir{% endif %}</h2><p>{% if search or color_filter %}Essaie un autre mot ou une autre couleur.{% else %}Ajoute des pièces aux sets à réunir pour les voir apparaître ici.{% endif %}</p><a class="button button-primary" href="#ajouter">Préparer un set <span>→</span></a></section>
   {% endif %}
-
-  <section class="export-panel">
-    <div class="export-icon">⇩</div><div class="export-copy"><h2>Ta liste est prête</h2><p>Exporte les pièces des sets à réunir.</p></div>
-    <div class="export-actions"><a class="button button-outline" href="{{ url_for('export_bricklink', scope='gather') }}">BrickLink XML ↓</a><a class="button button-outline" href="{{ url_for('export_brickowl', scope='gather') }}">BrickOwl CSV ↓</a></div>
-  </section>
 {% endblock %}

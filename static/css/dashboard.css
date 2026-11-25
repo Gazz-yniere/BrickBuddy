@@ -1,0 +1,25 @@
+/* ============================================================
+   Accueil : cartes de la collection
+   ============================================================ */
+/* Deux colonnes : l'en-tête de la carte reste en haut, les compteurs forment
+   une ligne. La carte garde le gris du site ; seule la teinte de la carte
+   colore l'icône, les nombres et le contour au survol. */
+.dash-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.dash-card { --tint: var(--purple); display: grid; align-content: start; gap: 12px; padding: 16px; border: 1px solid var(--line); border-radius: 11px; background: var(--panel); transition: .16s ease; }
+.dash-card:hover { border-color: var(--tint); }
+.dash-card[data-tint="gathering"] { --tint: var(--missing-color); }
+.dash-card[data-tint="inventory"] { --tint: var(--tint-inventory); }
+.dash-card[data-tint="missing"] { --tint: var(--tint-missing); }
+.dash-card[data-tint="build"] { --tint: var(--tint-build); }
+.dash-card[data-tint="value"] { --tint: var(--found-color); }
+.dash-card-head { display: flex; min-height: 34px; align-items: center; gap: 10px; }
+.dash-icon { display: grid; width: 34px; height: 34px; flex: 0 0 34px; place-items: center; border: 1px solid var(--line); border-radius: 10px; color: var(--tint); background: var(--tile); font-size: 16px; }
+.dash-card h2 { margin: 0; font: 600 15px var(--font-display); }
+.dash-card p { margin: 0; color: var(--muted); font-size: 12px; line-height: 1.6; }
+.dash-card a { color: var(--tint); text-decoration: underline; }
+/* Les compteurs forment une ligne de tuiles de même forme, qui se replie
+   sur petit écran. */
+.dash-stats { display: flex; flex-wrap: wrap; gap: 8px; }
+.dash-stat { display: grid; gap: 2px; min-width: 104px; flex: 1 1 104px; padding: 9px 11px; border: 1px solid var(--line); border-radius: 9px; background: var(--field-bg); }
+.dash-stat strong { font: 700 19px var(--font-display); letter-spacing: -0.4px; color: var(--tint); }
+.dash-stat span { color: var(--muted); font-size: 11px; }

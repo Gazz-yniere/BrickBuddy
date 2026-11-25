@@ -1,0 +1,185 @@
+/* ============================================================
+   Variables : toutes les couleurs du site, en un seul endroit.
+   Aucune teinte n'est écrite ailleurs ; une ligne ici change tout.
+   Chargée en premier : les autres feuilles ne font que l'utiliser.
+   ============================================================ */
+:root {
+  color-scheme: dark;
+
+  /* Fonds, panneaux, contours, textes */
+  --bg: #171717;
+  --panel: #202020;
+  --panel-raised: #292929;
+  --panel-deep: #1b1b1b;
+  --tile: #252525;
+  --avatar-bg: #303030;
+  --shell-bg: #1d1d1d;
+  --hover-bg: #2a2a2a;
+  --line: #3b3b3b;
+  --tile-line: #393939;
+  --shell-line: #363636;
+  --dashed-line: #3b3b3b;
+  --image-bg: #f5f5f6;
+  --image-line: #3a3e4c;
+  --image-ink: #9ca2b4;
+  --white-bg: #fff;
+  --label-bg: #252525ef;
+  --scrollbar: #4d4d4d;
+  --notice-position-bg: #332c1f;
+
+  /* Zone de dépôt d'une notice (le cadre pointillé) */
+  --drop-line: #4d4d4d;
+  --drop-bg: #232323;
+  --drop-pick-line: #47415f;
+  --drop-ink: #c0b9ff;
+  --drop-hover-line: #7569b0;
+  --drop-hover-bg: #2a273c;
+  --drop-pick-hover-bg: #34304b;
+  --login-glow: #29251f;
+  --login-line: #414141;
+  --ink: #f0f1f8;
+  --muted: #a1a1a1;
+  --muted-strong: #c4c4c4;
+  --placeholder: #7f7f7f;
+
+  /* Teinte du site (ambre) et ses déclinaisons */
+  --purple: #edb25e;
+  --purple-strong: #c77932;
+  --purple-hover: #d78a42;
+  --purple-shadow: #c7793240;
+  --accent-ink: #f0c58f;
+  --accent-bg: #352b21;
+  --accent-warm: #463522;
+  --accent-deep: #3b3023;
+  --accent-line: #62503c;
+  --accent-active-line: #6a4b2c;
+  --accent-hover-line: #8d6741;
+  --accent-hover: #3a2f23;
+  --warn-ink: #ffbd95;
+  --warn-bg: #453127;
+  --missing-color: #e58b32;
+  --found-color: #64d5a5;
+
+  /* Pièce trouvée (vert) */
+  --found-ink: #a4e7c2;
+  --found-line: #3b725c;
+  --found-bg: #20372f;
+  --found-hover: #2b4a3e;
+  --found-bright: #75d7ab;
+  --on-found: #101b18;
+
+  /* Prix (vert clair) */
+  --price-ink: #9ad3a6;
+
+  /* Alertes et messages */
+  --danger: #a64c32;
+  --danger-hover: #bc5b3c;
+  --danger-ink: #ffb4a6;
+  --danger-bright: #ffb1a3;
+  --danger-line: #643f42;
+  --danger-bg: #352327;
+  --success-ink: #9ae6bf;
+  --success-line: #2d5947;
+  --success-bg: #1c302a;
+
+  /* Petits boutons ronds d'action (+, −, cocher) */
+  --step-ink: #e4e4e4;
+  --step-bg: #393939;
+  --step-hover: #555555;
+
+  /* Pastilles d'action d'une carte de set */
+  --control-ink: #d0c4b3;
+  --control-bg: #302d29;
+  --control-hover-ink: #fff0dc;
+  --control-hover-bg: #44392c;
+  --link-ink: #e8ad69;
+  --link-bg: #382d22;
+  --link-hover-bg: #4a3828;
+  --remove-line: #4c4033;
+  --remove-ink: #b6a99a;
+  --remove-hover-line: #9c5140;
+  --remove-hover-ink: #ffc0ad;
+  --remove-hover-bg: #4b2d26;
+
+  /* Notice en cours de lecture */
+  --current-line: #8a5a2f;
+  --current-line-hover: #b9762f;
+  --current-bg: #30271f;
+
+  /* Champs de formulaire : la même teinte que les tuiles de compteurs */
+  --field-bg: #1b1b1b;
+  --field-line: #393939;
+
+  /* Ombres : un visuel agrandi, un texte sur une entête teintée, un voile léger */
+  --shadow-image: rgba(0, 0, 0, 0.45);
+  --shadow-text: rgba(0, 0, 0, 0.5);
+  --shadow-veil: rgba(0, 0, 0, 0.035);
+  --shadow-soft: rgba(0, 0, 0, 0.02);
+
+  /* Entête d'une image sans visuel (le carré « 🧱 ») */
+  --placeholder-from: #363636;
+  --placeholder-to: #242424;
+
+  /* Popin de confirmation */
+  --dialog-line: #494949;
+  --dialog-bg: #242424;
+  --dialog-icon-line: #4a3f2e;
+  --dialog-icon-ink: #d9a97a;
+  --dialog-icon-bg: #2e2820;
+
+  /* Déclinaisons locales des boutons ronds */
+  --control-hover-line: #987044;
+  --remove-bg: #353535;
+  --quiet-line: #555555;
+
+  /* Bouton « neutre » (Effacer, retour) et bouton contouré */
+  --muted-button-ink: #eee;
+  --muted-button-bg: #414141;
+  --muted-button-hover: #505050;
+  --outline-bg: #30271f;
+
+  /* Repère d'un set : même teinte pour la ligne de référence et la carte */
+  --tone-0: #63a3eb;
+  --tone-1: var(--found-color);
+  --tone-2: var(--missing-color);
+  --tone-3: #a48ce0;
+  --tone-4: #8bc8dc;
+  --tone-5: #e89996;
+
+  /* Teintes parcimonieuses des cartes de l'accueil */
+  --tint-inventory: #8bc8dc;
+  --tint-missing: #e89996;
+  --tint-build: #a48ce0;
+
+  /* Polices */
+  --font-body: "DM Sans", system-ui, sans-serif;
+  --font-display: "Space Grotesk", sans-serif;
+}
+
+/* Pastille de couleur : la teinte vient de --brick (hex Rebrickable), donnée
+   par le gabarit. Une couleur sans hex (figurine, « sans couleur ») garde le gris. */
+.color-swatch { width: 23px; height: 23px; flex: 0 0 23px; border: 2px solid #727787; border-radius: 50%; background: var(--brick, #9095a3); box-shadow: 0 0 0 3px #ffffff08; }
+.swatch-figurine { border-color: #c9a227; background: linear-gradient(135deg, #f7dc7a, #d4a017); }
+
+/* Ligne de référence d'un set (une ou plusieurs copies) */
+.set-status-form.set-tone-0,
+.set-status-form.set-tone-1,
+.set-status-form.set-tone-2,
+.set-status-form.set-tone-3,
+.set-status-form.set-tone-4,
+.set-status-form.set-tone-5 { border-radius: 6px; padding: 0 3px; }
+.set-status-form.set-tone-0 { background: color-mix(in srgb, var(--tone-0) 16%, transparent); border-left: 3px solid var(--tone-0); }
+.set-status-form.set-tone-1 { background: color-mix(in srgb, var(--tone-1) 16%, transparent); border-left: 3px solid var(--tone-1); }
+.set-status-form.set-tone-2 { background: color-mix(in srgb, var(--tone-2) 16%, transparent); border-left: 3px solid var(--tone-2); }
+.set-status-form.set-tone-3 { background: color-mix(in srgb, var(--tone-3) 16%, transparent); border-left: 3px solid var(--tone-3); }
+.set-status-form.set-tone-4 { background: color-mix(in srgb, var(--tone-4) 16%, transparent); border-left: 3px solid var(--tone-4); }
+.set-status-form.set-tone-5 { background: color-mix(in srgb, var(--tone-5) 16%, transparent); border-left: 3px solid var(--tone-5); }
+
+/* Carte d'une pièce qui ne appartient qu'à un seul set */
+.set-card[data-tone="0"] { --set-tone: var(--tone-0); }
+.set-card[data-tone="1"] { --set-tone: var(--tone-1); }
+.set-card[data-tone="2"] { --set-tone: var(--tone-2); }
+.set-card[data-tone="3"] { --set-tone: var(--tone-3); }
+.set-card[data-tone="4"] { --set-tone: var(--tone-4); }
+.set-card[data-tone="5"] { --set-tone: var(--tone-5); }
+.set-card[data-tone] { border-left: 4px solid var(--set-tone); background: color-mix(in srgb, var(--set-tone) 14%, transparent); }

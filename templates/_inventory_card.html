@@ -21,6 +21,12 @@
         <span class="alloc-value">{{ part.reserved_qty }} · {{ part.reserved_set_count }} set{{ 's' if part.reserved_set_count > 1 }}</span>
       </div>
     {% endif %}
+    {% if part.unit_price %}
+      <div class="alloc-row alloc-price">
+        <span class="alloc-label">prix</span>
+        <span class="alloc-value">{{ part.unit_price|price_eur }} l’unité · <strong>{{ part.line_total|price_eur }}</strong></span>
+      </div>
+    {% endif %}
   </div>
   {% if part.item_type == 'minifig' %}{{ minifig_ui.render(part.part_num, minifig_parts) }}{% endif %}
 </article>

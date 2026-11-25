@@ -1,0 +1,23 @@
+{# Tuile d'une notice enregistree, dans le carrousel.
+   Variables : manual (avec size et book_label), current. #}
+<article class="instruction-card{% if current %} is-current{% endif %}" data-instruction-card data-position="{{ manual.source_position if manual.source_position is not none else '' }}" data-notice-url="{{ url_for('set_instructions', set_id=set.id, notice=manual.id) }}" data-pdf-url="{{ url_for('instruction_pdf', set_id=set.id, notice_id=manual.id) }}" data-pdf-size="{{ manual.size }}" title="Cliquer pour lire cette notice"{% if current %} aria-current="true"{% endif %}>
+  <span class="instruction-card-position">{{ manual.book_label }}</span>
+  <div class="instruction-card-thumb">
+    {% set cover = manual.source_url|instruction_cover %}
+    {% if cover %}
+      <img src="{{ cover }}" alt="Couverture de la notice {{ manual.filename }}" loading="lazy" referrerpolicy="no-referrer">
+    {% else %}
+      <span class="instruction-cover-empty" aria-hidden="true">▤</span>
+    {% endif %}
+    <span class="instruction-current" data-current-badge{% if not current %} hidden{% endif %}>Lue</span>
+  </div>
+  <h3 class="instruction-card-title"><a href="{{ url_for('set_instructions', set_id=set.id, notice=manual.id) }}">{{ manual.display_title or manual.filename }}</a></h3>
+  <p class="instruction-card-file">{{ manual.filename }}</p>
+  <div class="instruction-card-actions">
+    <a class="button button-outline" href="{{ url_for('instruction_pdf', set_id=set.id, notice_id=manual.id) }}" target="_blank" rel="noopener">Ouvrir ↗</a>
+    <form class="instruction-delete-form" action="{{ url_for('delete_instruction', set_id=set.id, notice_id=manual.id) }}" method="post" data-confirm data-confirm-title="Retirer la notice" data-confirm-button="Retirer la notice" data-confirm-message="Retirer cette notice pour tous les exemplaires de ce set ?">
+      <input type="hidden" name="csrf_token" value="{{ session.csrf_token }}">
+      <button class="button button-muted" type="submit">Retirer</button>
+    </form>
+  </div>
+</article>

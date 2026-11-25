@@ -1,0 +1,30 @@
+{# En-tete du panneau unique « Notices du set » : compte rendu, bouton de
+   telechargement groupé, messages de recherche.
+   Variables : manuals, official (ou None), search_error. #}
+{% set unsaved = official|rejectattr('saved')|list if official is not none else [] %}
+{% set saved_count = manuals|length %}
+<p class="instruction-head-count" data-instruction-count>
+  {%- if search_error -%}
+    <span class="instruction-error" role="alert">{{ search_error }}</span>
+  {%- elif official is not none and not official -%}
+    Aucune notice officielle trouvée pour ce set. Tu peux ajouter un PDF manuellement.
+  {%- elif saved_count -%}
+    {{ saved_count }} notice{{ 's' if saved_count != 1 }} enregistrée{{ 's' if saved_count != 1 }}
+    {%- if unsaved %} · {{ unsaved|length }} à télécharger{% endif -%}
+  {%- elif unsaved -%}
+    {{ unsaved|length }} notice{{ 's' if unsaved|length != 1 }} disponible{{ 's' if unsaved|length != 1 }} pour ce set
+  {%- else -%}
+    Aucune notice pour ce set. Lance la recherche LEGO ou ajoute un PDF.
+  {%- endif -%}
+</p>
+{% if search_error %}
+  <a class="button button-outline" href="{{ url_for('set_instructions', set_id=set.id, rechercher=1) }}" data-search-instructions><span class="button-spinner" aria-hidden="true"></span><span>Réessayer</span></a>
+{% elif official is none or not official %}
+  <a class="button button-outline" href="{{ url_for('set_instructions', set_id=set.id, rechercher=1) }}" data-search-instructions><span class="button-spinner" aria-hidden="true"></span><span>Rechercher les notices</span></a>
+{% elif unsaved|length > 1 %}
+  <button class="button button-primary" type="button" data-download-all>
+    <span class="button-spinner" aria-hidden="true"></span>
+    <span data-download-label>Tout télécharger ({{ unsaved|length }})</span>
+  </button>
+{% endif %}
+<p class="instruction-download-status" data-download-status role="status" aria-live="polite"></p>

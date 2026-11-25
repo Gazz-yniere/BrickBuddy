@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}Ma collection{% endblock %}
+{% block breadcrumb %}MA COLLECTION{% endblock %}
+{% block content %}
+  <section class="page-intro">
+    <div><h1>Ma collection</h1><p>Un résumé de tout ce que Brick Buddy suit : sets, pièces à réunir, inventaire, listes à acheter et valeur estimée.</p></div>
+  </section>
+
+  <div class="dash-grid">
+    <a class="dash-card" data-tint="sets" href="{{ url_for('sets_page') }}">
+      <div class="dash-card-head"><span class="dash-icon" aria-hidden="true">▤</span><h2>Mes sets</h2></div>
+      <div class="dash-stats">
+        <span class="dash-stat"><strong>{{ summary.sets.numbers }}</strong><span>sets différents</span></span>
+        <span class="dash-stat"><strong>{{ summary.sets.copies }}</strong><span>exemplaires</span></span>
+        <span class="dash-stat"><strong>{{ summary.sets.themes }}</strong><span>thèmes</span></span>
+      </div>
+    </a>
+    <a class="dash-card" data-tint="gathering" href="{{ url_for('pieces_page') }}">
+      <div class="dash-card-head"><span class="dash-icon" aria-hidden="true">▦</span><h2>Pièces à réunir</h2></div>
+      <div class="dash-stats">
+        <span class="dash-stat"><strong>{{ summary.gathering.sets }}</strong><span>sets à assembler</span></span>
+        <span class="dash-stat"><strong>{{ summary.gathering.pieces }}</strong><span>pièces à trouver</span></span>
+      </div>
+    </a>
+    <a class="dash-card" data-tint="inventory" href="{{ url_for('inventory_page') }}">
+      <div class="dash-card-head"><span class="dash-icon" aria-hidden="true">▥</span><h2>Inventaire</h2></div>
+      <div class="dash-stats">
+        <span class="dash-stat"><strong>{{ summary.inventory.references }}</strong><span>références</span></span>
+        <span class="dash-stat"><strong>{{ summary.inventory.pieces }}</strong><span>pièces possédées</span></span>
+        <span class="dash-stat"><strong>{{ summary.inventory.stock_pieces }}</strong><span>en vrac</span></span>
+      </div>
+    </a>
+    <a class="dash-card" data-tint="missing" href="{{ url_for('missing_page') }}">
+      <div class="dash-card-head"><span class="dash-icon" aria-hidden="true">⌕</span><h2>Pièces manquantes</h2></div>
+      <div class="dash-stats">
+        <span class="dash-stat"><strong>{{ summary.missing.references }}</strong><span>références à acheter</span></span>
+        <span class="dash-stat"><strong>{{ summary.missing.pieces }}</strong><span>pièces à acheter</span></span>
+      </div>
+    </a>
+    <div class="dash-card" data-tint="build">
+      <div class="dash-card-head"><span class="dash-icon" aria-hidden="true">✦</span><h2>Construire</h2></div>
+      <div class="dash-stats">
+        <span class="dash-stat"><strong>{{ summary.building.instructions }}</strong><span>notices disponibles</span></span>
+        <span class="dash-stat"><strong>{{ summary.building.minifigs }}</strong><span>figurines suivies</span></span>
+      </div>
+    </div>
+    <div class="dash-card" data-tint="value">
+      <div class="dash-card-head"><span class="dash-icon" aria-hidden="true">€</span><h2>Valeur estimée</h2></div>
+      {% if summary.value and summary.value.total > 0 %}
+        <div class="dash-stats">
+          <span class="dash-stat"><strong>{{ '%.0f'|format(summary.value.total) }} €</strong><span>valeur des pièces connues</span></span>
+          <span class="dash-stat"><strong>{{ summary.value.priced_parts }}</strong><span>pièces avec un prix</span></span>
+        </div>
+      {% elif show_prices %}
+        <p>La relève des prix est en cours : la valeur s'affichera dès le premier prix connu.</p>
+      {% else %}
+        <p>Les prix ne sont pas activés. Réglez « Afficher les prix » sur la page <a class="reset-link" href="{{ url_for('settings_page') }}">Paramètres</a>.</p>
+      {% endif %}
+    </div>
+  </div>
+{% endblock %}

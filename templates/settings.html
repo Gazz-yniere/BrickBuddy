@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block title %}Paramètres{% endblock %}
+{% block breadcrumb %}PARAMÈTRES{% endblock %}
+{% block content %}
+  <section class="page-intro">
+    <div><h1>Paramètres</h1><p>Ces réglages passent devant ceux du fichier <code>.env</code>. Les clés enregistrées restent dans ta base locale : elles ne sont jamais affichées ni journalisées. La pastille indique d'où vient la clé utilisée aujourd'hui.</p></div>
+  </section>
+
+  <form class="settings-card" method="post" action="{{ url_for('settings_update') }}">
+    <input type="hidden" name="csrf_token" value="{{ session.csrf_token }}">
+    <h2>Connexion aux services</h2>
+    <p>La clé Rebrickable alimente les inventaires, les images et les thèmes des sets ; la clé BrickOwl alimente les prix.</p>
+
+    <div class="setting-field">
+      <label for="rebrickable-key">REBRICKABLE_API_KEY</label>
+      {% if 'REBRICKABLE_API_KEY' in saved_names %}
+        <span class="setting-badge">Enregistrée dans l'app</span>
+      {% elif 'REBRICKABLE_API_KEY' in env_names %}
+        <span class="setting-badge is-off">Clé du fichier .env</span>
+      {% else %}
+        <span class="setting-badge is-off">Aucune clé</span>
+      {% endif %}
+      <input id="rebrickable-key" type="password" name="REBRICKABLE_API_KEY" autocomplete="off" placeholder="{{ 'Remplacer la clé enregistrée' if 'REBRICKABLE_API_KEY' in saved_names else 'Saisir la clé Rebrickable…' }}">
+      <p class="collection-note">Laisser le champ vide retire la clé enregistrée : l'option revient au fichier .env.</p>
+    </div>
+
+    <div class="setting-field">
+      <label for="brickowl-key">BRICKOWL_API_KEY</label>
+      {% if 'BRICKOWL_API_KEY' in saved_names %}
+        <span class="setting-badge">Enregistrée dans l'app</span>
+      {% elif 'BRICKOWL_API_KEY' in env_names %}
+        <span class="setting-badge is-off">Clé du fichier .env</span>
+      {% else %}
+        <span class="setting-badge is-off">Aucune clé</span>
+      {% endif %}
+      <input id="brickowl-key" type="password" name="BRICKOWL_API_KEY" autocomplete="off" placeholder="{{ 'Remplacer la clé enregistrée' if 'BRICKOWL_API_KEY' in saved_names else 'Saisir la clé BrickOwl…' }}">
+      <p class="collection-note">Laisser le champ vide retire la clé enregistrée : l'option revient au fichier .env.</p>
+    </div>
+
+    <div class="setting-field">
+      <label class="setting-check" for="show-prices">
+        <input type="checkbox" id="show-prices" name="SHOW_PRICES" {{ 'checked' if show_prices }}>
+        Afficher les prix estimés de l'inventaire
+      </label>
+      <p class="collection-note">Nécessite une clé BrickOwl. La relève quotidienne des prix se lance au premier affichage de l'inventaire.</p>
+    </div>
+
+    <button class="button button-primary" type="submit">Enregistrer <span>→</span></button>
+  </form>
+
+  <div class="settings-card">
+    <h2>Taux de change</h2>
+    <p>Les prix BrickOwl sont en livres ; ils sont convertis en euros avec le taux relevé automatiquement une fois par jour.</p>
+    <div class="rate-line">
+      <strong>{{ rate_text }} € pour 1 £</strong>
+      <small>{{ 'Dernier relevé : ' + rate_date if rate_date else 'Aucun relevé automatique pour l’instant : le taux du fichier .env est utilisé.' }}</small>
+      {% if rate_running %}<span class="setting-badge is-off" data-rate-running>Relevé en cours…</span>{% endif %}
+    </div>
+    <form class="rate-refresh" method="post" action="{{ url_for('settings_refresh_rate') }}">
+      <input type="hidden" name="csrf_token" value="{{ session.csrf_token }}">
+      <button class="button button-outline" type="submit">Mettre à jour maintenant</button>
+    </form>
+  </div>
+
+  <div class="settings-card">
+    <h2>Prix des pièces</h2>
+    {% if price_info %}
+      <p>La relève automatique de toutes les pièces possédées se lance une fois par jour, en arrière-plan. Le bouton ci-dessous la relance immédiatement.</p>
+      <div class="rate-line">
+        <small>Prix indicatifs relevés chez BrickOwl{% if price_info.date %} le {{ price_info.date }}{% endif %} · prix connu pour {{ price_info.covered }} référence{{ 's' if price_info.covered != 1 }} sur {{ price_info.total }}.</small>
+        {% if price_info.running %}<span class="setting-badge is-off" data-price-running>Relevé en cours…</span>{% endif %}
+      </div>
+      <form class="rate-refresh" method="post" action="{{ url_for('refresh_prices') }}">
+        <input type="hidden" name="csrf_token" value="{{ session.csrf_token }}">
+        <button class="button button-outline" type="submit">Rafraîchir les prix</button>
+      </form>
+    {% else %}
+      <p>Activez « Afficher les prix » et saisissez une clé BrickOwl pour relever les prix indicatifs de tes pièces chez BrickOwl.</p>
+    {% endif %}
+  </div>
+{% endblock %}

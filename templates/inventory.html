@@ -6,7 +6,6 @@
   {% set origin_filter = origin_filter or 'all' %}
   <section class="page-intro">
     <div>
-      <div class="eyebrow"><span>▥</span> TON INVENTAIRE</div>
       <h1>Mon inventaire</h1>
       <p>Tes pièces sont réparties en trois emplacements : le <strong>vrac</strong> (pièces détachées), les <strong>sets</strong> où elles sont rangées et les <strong>réservations</strong>. Chaque référence garde sa couleur et son origine, quel que soit l’endroit où elle se trouve.</p>
     </div>
@@ -16,30 +15,26 @@
         <div class="stat-tile"><strong>{{ stock_quantity }}</strong><span>en vrac</span></div>
         <div class="stat-tile"><strong>{{ set_quantity }}</strong><span>dans un set</span></div>
         <div class="stat-tile"><strong>{{ reserved_quantity }}</strong><span>réservées</span></div>
+        {% if show_prices %}<div class="stat-tile stat-tile-price"{% if price_refresh_running %} data-price-running="1"{% endif %}><strong>{{ total_price|price_eur }}</strong><span>valeur estimée{% if price_refresh_running %} · relève en cours{% endif %}</span></div>{% endif %}
       </div>
-      <details class="add-stock-panel">
+      {% if show_prices %}
+      <div class="stat-tile stat-tile-note"{% if price_refresh_running %} data-price-running="1"{% endif %}>
+        <strong>Prix relevés{% if price_refresh_date %} le {{ price_refresh_date }}{% endif %}</strong>
+        <span>{{ priced_part_count }} référence{{ 's' if priced_part_count != 1 }} sur {{ part_count }} avec un prix{% if price_refresh_running %} · relève en cours{% endif %}</span>
+      </div>
+      {% endif %}
+      <details class="add-stock-panel" data-group-key="add-stock">
         <summary class="button button-primary" role="button" aria-expanded="false">＋ Ajouter du vrac</summary>
         <form action="{{ url_for('add_stock_part') }}" method="post" class="add-stock-form">
           <input type="hidden" name="color_name" id="stock-color-name">
           <label><span>Réf. pièce</span><input name="part_num" placeholder="Ex. 3001" required></label>
           <label><span>Nom</span><input name="part_name" placeholder="Brique 2 × 4"></label>
-          <label class="select-label" data-color-name><span>Couleur</span><select name="color_id" id="stock-color"><option value="">Aucune</option>{% for o in stock_color_options %}<option value="{{ o.color_id }}" data-name="{{ o.color_name }}">{{ o.color_name }}</option>{% endfor %}</select></label>
+          <label class="select-label" data-color-name><span>Couleur</span><select name="color_id" id="stock-color"><option value="">Aucune</option>{% for o in stock_color_options %}<option value="{{ o.color_id }}" data-name="{{ o.color_name }}">{{ o.label }}</option>{% endfor %}</select></label>
           <label><span>Quantité</span><input name="quantity" type="number" min="1" value="1"></label>
           <label><span>Image (URL)</span><input name="image_url" placeholder="https://…"></label>
           <label class="select-label"><span>Type</span><select name="item_type"><option value="part">Pièce</option><option value="minifig">Figurine</option></select></label>
           <button class="button button-primary" type="submit">Ajouter au vrac</button>
         </form>
-        <script>
-          (function () {
-            var sel = document.getElementById('stock-color');
-            var hidden = document.getElementById('stock-color-name');
-            if (!sel || !hidden) { return; }
-            hidden.value = sel.options[sel.selectedIndex].dataset.name || '';
-            sel.addEventListener('change', function () {
-              hidden.value = sel.options[sel.selectedIndex].dataset.name || '';
-            });
-          })();
-        </script>
       </details>
       <a class="button button-primary" href="{{ url_for('verify_set_page') }}">Vérifier un set <span>→</span></a>
     </div>
@@ -48,17 +43,17 @@
   <section class="toolbar-card">
     <form class="filter-form" method="get" action="{{ url_for('inventory_page') }}">
       <label class="search-box"><span>⌕</span><input name="q" value="{{ search }}" placeholder="Chercher une pièce, un set, une couleur..." aria-label="Rechercher dans l'inventaire"></label>
-      <label class="select-label"><span>Couleur</span><select name="color"><option value="">Toutes les couleurs</option>{% for color in colors %}<option value="{{ color }}" {{ 'selected' if color_filter == color else '' }}>{{ color }}</option>{% endfor %}</select></label>
+      <label class="select-label"><span>Couleur</span><select name="color"><option value="">Toutes les couleurs</option>{% for color in colors %}<option value="{{ color.value }}" {{ 'selected' if color_filter == color.value else '' }}>{{ color.label }}</option>{% endfor %}</select></label>
       <span class="origin-chips">
         <span class="chip-label">Origine</span>
-        <a href="{{ url_for('inventory_page', q=search or '', color=color_filter or '', origin='all') }}" class="origin-chip {{ 'is-active' if origin_filter == 'all' else '' }}">Tout</a>
-        <a href="{{ url_for('inventory_page', q=search or '', color=color_filter or '', origin='stock') }}" class="origin-chip {{ 'is-active' if origin_filter == 'stock' else '' }}">En vrac</a>
-        <a href="{{ url_for('inventory_page', q=search or '', color=color_filter or '', origin='sets') }}" class="origin-chip {{ 'is-active' if origin_filter == 'sets' else '' }}">Dans un set</a>
-        <a href="{{ url_for('inventory_page', q=search or '', color=color_filter or '', origin='reserved') }}" class="origin-chip {{ 'is-active' if origin_filter == 'reserved' else '' }}">Réservé</a>
-        <a href="{{ url_for('inventory_page', q=search or '', color=color_filter or '', origin='mixed') }}" class="origin-chip {{ 'is-active' if origin_filter == 'mixed' else '' }}">Mixte</a>
+        <a href="{{ url_for('inventory_page', q=search or '', color=color_filter or '', origin='all') }}" class="origin-chip {{ 'is-active' if origin_filter == 'all' else '' }}" data-dynamic>Tout</a>
+        <a href="{{ url_for('inventory_page', q=search or '', color=color_filter or '', origin='stock') }}" class="origin-chip {{ 'is-active' if origin_filter == 'stock' else '' }}" data-dynamic>En vrac</a>
+        <a href="{{ url_for('inventory_page', q=search or '', color=color_filter or '', origin='sets') }}" class="origin-chip {{ 'is-active' if origin_filter == 'sets' else '' }}" data-dynamic>Dans un set</a>
+        <a href="{{ url_for('inventory_page', q=search or '', color=color_filter or '', origin='reserved') }}" class="origin-chip {{ 'is-active' if origin_filter == 'reserved' else '' }}" data-dynamic>Réservé</a>
+        <a href="{{ url_for('inventory_page', q=search or '', color=color_filter or '', origin='mixed') }}" class="origin-chip {{ 'is-active' if origin_filter == 'mixed' else '' }}" data-dynamic>Mixte</a>
       </span>
       <button class="button button-muted" type="submit">Appliquer</button>
-      {% if search or color_filter or origin_filter != 'all' %}<a class="reset-link" href="{{ url_for('inventory_page') }}">Effacer</a>{% endif %}
+      {% if search or color_filter or origin_filter != 'all' %}<a class="reset-link" href="{{ url_for('inventory_page') }}" data-dynamic>Effacer</a>{% endif %}
     </form>
   </section>
 
@@ -73,7 +68,7 @@
             <span class="color-swatch {{ 'swatch-' ~ group.name|lower|replace(' ', '-') }}" title="{{ group.name }}"></span>
             <div class="color-heading"><h3>{{ group.name }}</h3><span>{{ group.parts|length }} référence{{ 's' if group.parts|length != 1 else '' }}</span></div>
             <span class="color-totals"><strong>{{ group.quantity }}</strong><span>pièces</span></span>
-            <span class="color-group-chevron" aria-hidden="true">⌄</span>
+            <span class="color-group-chevron" aria-hidden="true"></span>
           </summary>
           <div class="inventory-parts">
             {% for part in group.parts %}

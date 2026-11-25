@@ -1,9 +1,9 @@
 services:
-  legolist:
+  brickbuddy:
     image: ${DOCKERHUB_USERNAME:-local}/${DOCKERHUB_REPOSITORY:-brickbuddy}:${IMAGE_TAG:-latest}
     build:
       context: .
-    container_name: legolist
+    container_name: brickbuddy
     ports:
       - "${PORT:-8000}:8000"
     env_file:
@@ -15,3 +15,17 @@ services:
     volumes:
       - ./data:/data
     restart: unless-stopped
+
+  # Copie de la base avant une mise à jour : docker compose run --rm backup
+  backup:
+    image: ${DOCKERHUB_USERNAME:-local}/${DOCKERHUB_REPOSITORY:-brickbuddy}:${IMAGE_TAG:-latest}
+    build:
+      context: .
+    command: ["python", "-m", "brickbuddy.backup"]
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      DATABASE_PATH: /data/legolist.db
+    volumes:
+      - ./data:/data

@@ -1,0 +1,35 @@
+/* ============================================================
+   Squelette critique : reset et structure de la page.
+   Chargée juste après variables.css : le premier tracé est déjà la
+   page finale, aucune couleur ne passe pendant le chargement.
+   Le reset et le squelette n'existent qu'ici — aucune autre feuille ne
+   les redouble, et les adaptations de largeur vivent dans responsive.css.
+   ============================================================ */
+
+* { box-sizing: border-box; }
+html { background: var(--bg); }
+body { margin: 0; color: var(--ink); background: var(--bg); font-family: var(--font-body); }
+/* Jamais d'image hors cadre : évite les visuels géants avant la mise en page. */
+img { max-width: 100%; height: auto; }
+a { color: inherit; text-decoration: none; }
+button, input, select { font: inherit; }
+button, select { cursor: pointer; }
+h1, h2, h3, p { margin-top: 0; }
+
+/* La barre latérale est fixée à gauche, le contenu est décalé de sa largeur. */
+.app-shell { min-height: 100vh; }
+.sidebar { position: fixed; inset: 0 auto 0 0; z-index: 3; display: flex; width: 244px; min-height: 100vh; flex-direction: column; padding: 27px 17px 18px; border-right: 1px solid var(--shell-line); background: var(--shell-bg); }
+.main-nav { display: grid; gap: 6px; }
+.nav-link { display: flex; min-height: 43px; align-items: center; gap: 12px; padding: 0 11px; border: 1px solid transparent; border-radius: 9px; color: var(--muted); font-size: 12px; font-weight: 600; transition: .15s ease; }
+
+/* Bas du menu : paramètres puis déconnexion, toujours visibles. */
+.sidebar-bottom { display: grid; gap: 8px; margin-top: auto; padding-top: 14px; border-top: 1px solid var(--shell-line); }
+.logout-button { width: 100%; min-height: 42px; border: 1px solid var(--tile-line); border-radius: 9px; color: var(--muted-strong); background: var(--tile); font-size: 12px; font-weight: 700; transition: .15s ease; }
+
+.main-area { min-height: 100vh; margin-left: 244px; padding: 0 39px; }
+.topbar { display: flex; height: 66px; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--shell-line); }
+/* L'en-tête ne porte que le nom de la page, dans la teinte du site. */
+.topbar-title { display: flex; align-items: center; gap: 8px; color: var(--purple); font-size: 12px; font-weight: 800; letter-spacing: 1.55px; text-transform: uppercase; }
+.content-area { max-width: 1300px; margin: 0 auto; padding: 31px 0 30px; }
+
+.footer { display: flex; min-height: 54px; align-items: center; gap: 9px; border-top: 1px solid var(--shell-line); color: var(--muted); font-size: 12px; }

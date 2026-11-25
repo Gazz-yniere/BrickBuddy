@@ -1,62 +1,222 @@
-const minifigDetailsKey = "brickbuddy-minifig-details";
+/* Pièces : compteurs de sets, figurines, vrac et totaux de l'inventaire. */
 
-function minifigDetailsId(details) {
-  if (details.hasAttribute("data-group-key")) {
-    return JSON.stringify(["color", details.dataset.groupKey]);
+function updateStockHint(card) {
+  const hint = card?.querySelector(".stock-hint");
+  if (!hint) {
+    return;
   }
-  return JSON.stringify(["minifig", details.dataset.minifigSet, details.dataset.minifigFig]);
+  const missing = [...card.querySelectorAll(".set-status-form .set-missing-count")].reduce(
+    (total, count) => total + Number(count.textContent),
+    0,
+  );
+  const stock = Number(hint.dataset.stock) || 0;
+  hint.hidden = missing === 0;
+  hint.classList.toggle("stock-enough", stock >= missing);
+  hint.classList.toggle("stock-partial", stock < missing);
+  hint.querySelector("[data-stock-status]").textContent =
+    `Vrac : ${stock} ${stock >= missing ? "· suffisant" : `· insuffisant (${missing} requis)`}`;
 }
 
-function reloadMinifigTracking() {
-  const state = {};
-  document.querySelectorAll("details[data-group-key], details[data-minifig-set]").forEach((details) => {
-    state[minifigDetailsId(details)] = details.open;
-  });
-  sessionStorage.setItem(minifigDetailsKey, JSON.stringify(state));
-  window.location.reload();
+function updateMinifigComponent(form, missing) {
+  const component = form.closest(".minifig-part");
+  const quantity = Number(form.dataset.quantity);
+  const isComplete = missing === 0;
+  form.querySelector(".set-missing-count").textContent = missing;
+  form.classList.toggle("is-complete", isComplete);
+  component.classList.toggle("is-found", isComplete);
+  const total = component.querySelector(".minifig-part-missing-total strong");
+  total.textContent = missing;
+  total.classList.toggle("accent-found", isComplete);
+  total.classList.toggle("accent-missing", !isComplete);
+  form.querySelector('button[name="change"][value="-1"]').disabled = isComplete;
+  form.querySelector('button[name="change"][value="1"]').disabled = missing >= quantity;
+  form.querySelector(".set-complete-part").disabled = isComplete;
 }
 
-const savedMinifigDetails = sessionStorage.getItem(minifigDetailsKey);
-if (savedMinifigDetails !== null) {
-  sessionStorage.removeItem(minifigDetailsKey);
-  const state = JSON.parse(savedMinifigDetails);
-  document.querySelectorAll("details[data-group-key], details[data-minifig-set]").forEach((details) => {
-    const id = minifigDetailsId(details);
-    if (Object.hasOwn(state, id)) {
-      details.open = state[id];
+function updateColorGroup(group) {
+  if (!(group instanceof HTMLDetailsElement)) {
+    return;
+  }
+  if (!group.querySelector(".piece-card")) {
+    group.remove();
+    return;
+  }
+  if (group.hasAttribute("data-group-key")) {
+    const grid = group.querySelector(".parts-grid");
+    const cards = [...grid.children];
+    cards.sort((first, second) =>
+      Number(first.classList.contains("is-found")) - Number(second.classList.contains("is-found")) ||
+      Number(first.dataset.gatheringOrder) - Number(second.dataset.gatheringOrder),
+    );
+    cards.forEach((card, index) => {
+      if (grid.children[index] !== card) {
+        grid.insertBefore(card, grid.children[index]);
+      }
+    });
+  }
+  const referenceCount = group.querySelectorAll(".piece-card").length;
+  group.querySelector(".color-heading span").textContent =
+    `${referenceCount} référence${referenceCount === 1 ? "" : "s"}`;
+  const missing = [...group.querySelectorAll(".part-missing-total strong")].reduce(
+    (total, count) => total + Number(count.textContent),
+    0,
+  );
+  group.dataset.missing = String(missing);
+  const total = group.querySelector("[data-color-missing]");
+  total.textContent = String(missing);
+  total.classList.toggle("accent-found", missing === 0);
+  total.classList.toggle("accent-missing", missing > 0);
+  const quantityTotal = [...group.querySelectorAll(".part-missing-total")].reduce(
+    (sum, element) => sum + (Number(element.dataset.quantity) || 0),
+    0,
+  );
+  const colorTotal = group.querySelector("[data-color-total]");
+  if (colorTotal) {
+    colorTotal.textContent = `/${quantityTotal}`;
+  }
+  group.open = missing > 0;
+}
+
+function refreshPieceCard(card) {
+  if (!card) {
+    return;
+  }
+  const missing = [...card.querySelectorAll(".set-status-form .set-missing-count")].reduce(
+    (total, count) => total + Number(count.textContent),
+    0,
+  );
+  const total = card.querySelector(".part-missing-total strong");
+  if (total) {
+    total.textContent = String(missing);
+    total.classList.toggle("accent-found", missing === 0);
+    total.classList.toggle("accent-missing", missing > 0);
+  }
+  card.classList.toggle("is-found", missing === 0);
+  updateStockHint(card);
+  updateColorGroup(card.closest("[data-color-group]"));
+}
+
+function removeCompletedGatheringSet(setId) {
+  document.querySelectorAll(`.set-status-form[data-set-id="${setId}"]`).forEach((setForm) => {
+    const card = setForm.closest(".piece-card");
+    const colorGroup = card?.closest("[data-color-group]");
+    const setQuantity = Number(setForm.dataset.quantity) || 0;
+    setForm.remove();
+    if (!card) {
+      return;
+    }
+    card.querySelectorAll(`.minifig-parts[data-minifig-set="${setId}"]`).forEach((details) => details.remove());
+    const partMissingTotal = card.querySelector(".part-missing-total");
+    if (partMissingTotal) {
+      const remaining = Math.max(0, Number(partMissingTotal.dataset.quantity || 0) - setQuantity);
+      partMissingTotal.dataset.quantity = String(remaining);
+      partMissingTotal.querySelector(".part-total").textContent = `/${remaining}`;
+    }
+    if (!card.querySelector(".set-status-form")) {
+      card.remove();
+      updateColorGroup(colorGroup);
+    } else {
+      refreshPieceCard(card);
     }
   });
+  document.querySelector(`.candidate-grid .set-card[data-set-id="${setId}"]`)?.remove();
+  const setCount = document.querySelector("[data-gathering-set-count]");
+  if (setCount) {
+    setCount.textContent = document.querySelectorAll(".candidate-grid .set-card").length;
+  }
+  const summary = document.querySelector("[data-gathering-part-summary]");
+  if (summary) {
+    const partCount = document.querySelectorAll(".color-groups .piece-card").length;
+    const colorCount = document.querySelectorAll(".color-groups [data-color-group]").length;
+    summary.textContent = `${partCount} référence${partCount === 1 ? "" : "s"} · ${colorCount} couleur${colorCount === 1 ? "" : "s"}`;
+  }
 }
 
-document.addEventListener("submit", (event) => {
-  const form = event.target;
-  if (
-    !(form instanceof HTMLFormElement) ||
-    !form.matches("[data-confirm]") ||
-    form.dataset.confirmed === "true"
-  ) {
-    return;
-  }
-
-  const dialog = document.querySelector("#confirm-dialog");
-  if (!(dialog instanceof HTMLDialogElement)) {
-    return;
-  }
-
-  event.preventDefault();
-  dialog.querySelector("[data-confirm-message]").textContent =
-    form.dataset.confirmMessage || "Confirmer cette action ?";
-  dialog.addEventListener(
-    "close",
-    () => {
-      if (dialog.returnValue === "confirm") {
-        form.dataset.confirmed = "true";
-        form.requestSubmit();
+function refreshInventoryTotals(group) {
+  if (group instanceof HTMLElement) {
+    const cards = [...group.querySelectorAll(".inventory-part-card")];
+    if (cards.length === 0) {
+      group.remove();
+    } else {
+      const quantity = cards.reduce(
+        (sum, card) => sum + (Number(card.dataset.total) || 0),
+        0,
+      );
+      const colorTotal = group.querySelector(".color-totals strong");
+      if (colorTotal) {
+        colorTotal.textContent = String(quantity);
       }
-    },
-    { once: true },
+      const referenceLabel = group.querySelector(".color-heading span");
+      if (referenceLabel) {
+        referenceLabel.textContent = `${cards.length} référence${cards.length === 1 ? "" : "s"}`;
+      }
+    }
+  }
+
+  const groups = [...document.querySelectorAll(".inventory-color")];
+  const partCount = groups.reduce(
+    (sum, item) => sum + item.querySelectorAll(".inventory-part-card").length,
+    0,
   );
-  dialog.showModal();
+  const totalQuantity = groups.reduce(
+    (sum, item) =>
+      sum +
+      [...item.querySelectorAll(".inventory-part-card")].reduce(
+        (groupSum, card) => groupSum + (Number(card.dataset.total) || 0),
+        0,
+      ),
+    0,
+  );
+
+  const heading = document.querySelector(".results-heading");
+  if (heading) {
+    heading.dataset.partCount = String(partCount);
+    heading.dataset.colorCount = String(groups.length);
+    heading.dataset.totalQuantity = String(totalQuantity);
+    const partLabel = heading.querySelector("[data-part-count-label]");
+    if (partLabel) {
+      partLabel.textContent = `${partCount} référence${partCount === 1 ? "" : "s"}`;
+    }
+    const summary = heading.querySelector("[data-color-summary]");
+    if (summary) {
+      summary.replaceChildren(
+        document.createTextNode(
+          `${groups.length} couleur${groups.length === 1 ? "" : "s"} · `,
+        ),
+      );
+      const quantity = document.createElement("span");
+      quantity.dataset.totalQuantityLabel = "";
+      quantity.textContent = String(totalQuantity);
+      summary.append(quantity, document.createTextNode(" pièces"));
+    }
+    if (groups.length === 0) {
+      heading.remove();
+      document.querySelector(".origin-legend")?.remove();
+    }
+  }
+}
+
+// Nom de couleur repris du menu déroulant : le champ caché part avec le formulaire.
+function syncStockColorName(select) {
+  const field = document.getElementById("stock-color-name");
+  if (field) {
+    field.value = select.options[select.selectedIndex]?.dataset.name ?? "";
+  }
+}
+
+document.querySelectorAll("#stock-color").forEach(syncStockColorName);
+
+// Après une mise à jour sans rechargement, le menu déroulant est nouveau :
+// le champ caché reprend la couleur affichée.
+document.addEventListener("page-updated", () => {
+  document.querySelectorAll("#stock-color").forEach(syncStockColorName);
+});
+
+document.addEventListener("change", (event) => {
+  const select = event.target;
+  if (select instanceof HTMLSelectElement && select.id === "stock-color") {
+    syncStockColorName(select);
+  }
 });
 
 document.addEventListener("submit", async (event) => {
@@ -153,15 +313,11 @@ document.addEventListener("submit", async (event) => {
         completeButton.disabled = result.set_missing === 0;
       }
     }
+    await refreshCurrentPage();
   } catch (error) {
-    const messages = document.querySelector("#interaction-messages");
-    messages.replaceChildren();
-    const message = document.createElement("div");
-    message.className = "flash error";
-    message.textContent =
-      error instanceof Error ? error.message : "La quantité n'a pas pu être mise à jour.";
-    messages.append(message);
-    messages.hidden = false;
+    showInteractionError(
+      error instanceof Error ? error.message : "La quantité n'a pas pu être mise à jour.",
+    );
   } finally {
     delete form.dataset.pending;
     const missing = Number(form.querySelector(".set-missing-count").textContent);
@@ -176,126 +332,6 @@ document.addEventListener("submit", async (event) => {
     updateStockHint(form.closest(".piece-card"));
   }
 });
-
-function updateStockHint(card) {
-  const hint = card?.querySelector(".stock-hint");
-  if (!hint) {
-    return;
-  }
-  const missing = [...card.querySelectorAll(".set-status-form .set-missing-count")].reduce(
-    (total, count) => total + Number(count.textContent),
-    0,
-  );
-  const stock = Number(hint.dataset.stock) || 0;
-  hint.hidden = missing === 0;
-  hint.classList.toggle("stock-enough", stock >= missing);
-  hint.classList.toggle("stock-partial", stock < missing);
-  hint.querySelector("[data-stock-status]").textContent =
-    `Vrac : ${stock} ${stock >= missing ? "· suffisant" : `· insuffisant (${missing} requis)`}`;
-}
-
-function removeCompletedGatheringSet(setId) {
-  document.querySelectorAll(`.set-status-form[data-set-id="${setId}"]`).forEach((setForm) => {
-    const card = setForm.closest(".piece-card");
-    const colorGroup = card?.closest("[data-color-group]");
-    const setQuantity = Number(setForm.dataset.quantity) || 0;
-    setForm.remove();
-    if (!card) {
-      return;
-    }
-    card.querySelectorAll(`.minifig-parts[data-minifig-set="${setId}"]`).forEach((details) => details.remove());
-    const partMissingTotal = card.querySelector(".part-missing-total");
-    if (partMissingTotal) {
-      const remaining = Math.max(0, Number(partMissingTotal.dataset.quantity || 0) - setQuantity);
-      partMissingTotal.dataset.quantity = String(remaining);
-      partMissingTotal.querySelector(".part-total").textContent = `/${remaining}`;
-    }
-    if (!card.querySelector(".set-status-form")) {
-      card.remove();
-      updateColorGroup(colorGroup);
-    } else {
-      refreshPieceCard(card);
-    }
-  });
-  document.querySelector(`.candidate-grid .set-card[data-set-id="${setId}"]`)?.remove();
-  const setCount = document.querySelector("[data-gathering-set-count]");
-  if (setCount) {
-    setCount.textContent = document.querySelectorAll(".candidate-grid .set-card").length;
-  }
-  const summary = document.querySelector("[data-gathering-part-summary]");
-  if (summary) {
-    const partCount = document.querySelectorAll(".color-groups .piece-card").length;
-    const colorCount = document.querySelectorAll(".color-groups [data-color-group]").length;
-    summary.textContent = `${partCount} référence${partCount === 1 ? "" : "s"} · ${colorCount} couleur${colorCount === 1 ? "" : "s"}`;
-  }
-}
-
-function updateMinifigComponent(form, missing) {
-  const component = form.closest(".minifig-part");
-  const quantity = Number(form.dataset.quantity);
-  const isComplete = missing === 0;
-  form.querySelector(".set-missing-count").textContent = missing;
-  form.classList.toggle("is-complete", isComplete);
-  component.classList.toggle("is-found", isComplete);
-  const total = component.querySelector(".minifig-part-missing-total strong");
-  total.textContent = missing;
-  total.classList.toggle("accent-found", isComplete);
-  total.classList.toggle("accent-missing", !isComplete);
-  form.querySelector('button[name="change"][value="-1"]').disabled = isComplete;
-  form.querySelector('button[name="change"][value="1"]').disabled = missing >= quantity;
-  form.querySelector(".set-complete-part").disabled = isComplete;
-}
-
-function updateColorGroup(group) {
-  if (!(group instanceof HTMLDetailsElement)) {
-    return;
-  }
-  if (!group.querySelector(".piece-card")) {
-    group.remove();
-    return;
-  }
-  const referenceCount = group.querySelectorAll(".piece-card").length;
-  group.querySelector(".color-heading span").textContent =
-    `${referenceCount} référence${referenceCount === 1 ? "" : "s"}`;
-  const missing = [...group.querySelectorAll(".part-missing-total strong")].reduce(
-    (total, count) => total + Number(count.textContent),
-    0,
-  );
-  group.dataset.missing = String(missing);
-  const total = group.querySelector("[data-color-missing]");
-  total.textContent = String(missing);
-  total.classList.toggle("accent-found", missing === 0);
-  total.classList.toggle("accent-missing", missing > 0);
-  const quantityTotal = [...group.querySelectorAll(".part-missing-total")].reduce(
-    (sum, element) => sum + (Number(element.dataset.quantity) || 0),
-    0,
-  );
-  const colorTotal = group.querySelector("[data-color-total]");
-  if (colorTotal) {
-    colorTotal.textContent = `/${quantityTotal}`;
-  }
-  group.open = missing > 0;
-}
-
-
-function refreshPieceCard(card) {
-  if (!card) {
-    return;
-  }
-  const missing = [...card.querySelectorAll(".set-status-form .set-missing-count")].reduce(
-    (total, count) => total + Number(count.textContent),
-    0,
-  );
-  const total = card.querySelector(".part-missing-total strong");
-  if (total) {
-    total.textContent = String(missing);
-    total.classList.toggle("accent-found", missing === 0);
-    total.classList.toggle("accent-missing", missing > 0);
-  }
-  card.classList.toggle("is-found", missing === 0);
-  updateStockHint(card);
-  updateColorGroup(card.closest("[data-color-group]"));
-}
 
 document.addEventListener("submit", async (event) => {
   const form = event.target;
@@ -356,6 +392,7 @@ document.addEventListener("submit", async (event) => {
       }
     }
     responseSucceeded = true;
+    await refreshCurrentPage();
   } catch (error) {
     showInteractionError(
       error instanceof Error
@@ -378,6 +415,7 @@ document.addEventListener("submit", async (event) => {
   event.preventDefault();
   form.dataset.pending = "true";
   const button = form.querySelector("button");
+  startLoading(button);
   button.disabled = true;
   try {
     const response = await fetch(form.action, {
@@ -389,8 +427,10 @@ document.addEventListener("submit", async (event) => {
     if (!response.ok) {
       throw new Error(result.error || "Impossible de prendre dans le vrac.");
     }
+    // Une figurine prise dans le vrac change les composants affichés : la page
+    // est redemandée et remplacée, jamais rechargée, et le vrac n'est pas compté deux fois.
     if (result.updates.some((update) => update.item_type === "minifig")) {
-      reloadMinifigTracking();
+      await refreshCurrentPage();
       return;
     }
     const card = form.closest(".piece-card");
@@ -415,10 +455,12 @@ document.addEventListener("submit", async (event) => {
       hint.remove();
     }
     refreshPieceCard(card);
+    await refreshCurrentPage();
   } catch (error) {
     showInteractionError(error instanceof Error ? error.message : "Impossible de prendre dans le vrac.");
   } finally {
     delete form.dataset.pending;
+    stopLoading(button);
     button.disabled = false;
   }
 });
@@ -427,7 +469,7 @@ document.addEventListener("submit", async (event) => {
   const form = event.target;
   if (
     !(form instanceof HTMLFormElement) ||
-    !form.matches(".stock-step-form, .stock-add-form") ||
+    !form.matches(".stock-step-form, .stock-add-form, .add-stock-form") ||
     form.dataset.pending
   ) {
     return;
@@ -458,6 +500,8 @@ document.addEventListener("submit", async (event) => {
       throw new Error(result.error || "Le vrac n'a pas pu être mis à jour.");
     }
 
+    // Le panneau d'ajout n'a pas de carte à re-render : la page redemandée
+    // affiche la nouvelle entrée, le message du serveur et les compteurs.
     const card = form.closest(".inventory-part-card");
     const group = card?.closest(".inventory-color") || null;
     if (result.removed) {
@@ -471,6 +515,7 @@ document.addEventListener("submit", async (event) => {
       }
     }
     refreshInventoryTotals(group);
+    await refreshCurrentPage();
   } catch (error) {
     previousStates.forEach((disabled, index) => {
       controls[index].disabled = disabled;
@@ -482,80 +527,3 @@ document.addEventListener("submit", async (event) => {
     delete form.dataset.pending;
   }
 });
-
-function refreshInventoryTotals(group) {
-  if (group instanceof HTMLElement) {
-    const cards = [...group.querySelectorAll(".inventory-part-card")];
-    if (cards.length === 0) {
-      group.remove();
-    } else {
-      const quantity = cards.reduce(
-        (sum, card) => sum + (Number(card.dataset.total) || 0),
-        0,
-      );
-      const colorTotal = group.querySelector(".color-totals strong");
-      if (colorTotal) {
-        colorTotal.textContent = String(quantity);
-      }
-      const referenceLabel = group.querySelector(".color-heading span");
-      if (referenceLabel) {
-        referenceLabel.textContent = `${cards.length} référence${cards.length === 1 ? "" : "s"}`;
-      }
-    }
-  }
-
-  const groups = [...document.querySelectorAll(".inventory-color")];
-  const partCount = groups.reduce(
-    (sum, item) => sum + item.querySelectorAll(".inventory-part-card").length,
-    0,
-  );
-  const totalQuantity = groups.reduce(
-    (sum, item) =>
-      sum +
-      [...item.querySelectorAll(".inventory-part-card")].reduce(
-        (groupSum, card) => groupSum + (Number(card.dataset.total) || 0),
-        0,
-      ),
-    0,
-  );
-
-  const heading = document.querySelector(".results-heading");
-  if (heading) {
-    heading.dataset.partCount = String(partCount);
-    heading.dataset.colorCount = String(groups.length);
-    heading.dataset.totalQuantity = String(totalQuantity);
-    const partLabel = heading.querySelector("[data-part-count-label]");
-    if (partLabel) {
-      partLabel.textContent = `${partCount} référence${partCount === 1 ? "" : "s"}`;
-    }
-    const summary = heading.querySelector("[data-color-summary]");
-    if (summary) {
-      summary.replaceChildren(
-        document.createTextNode(
-          `${groups.length} couleur${groups.length === 1 ? "" : "s"} · `,
-        ),
-      );
-      const quantity = document.createElement("span");
-      quantity.dataset.totalQuantityLabel = "";
-      quantity.textContent = String(totalQuantity);
-      summary.append(quantity, document.createTextNode(" pièces"));
-    }
-    if (groups.length === 0) {
-      heading.remove();
-      document.querySelector(".origin-legend")?.remove();
-    }
-  }
-}
-
-function showInteractionError(message) {
-  const container = document.querySelector("#interaction-messages");
-  if (!container) {
-    return;
-  }
-  container.replaceChildren();
-  const flash = document.createElement("div");
-  flash.className = "flash error";
-  flash.textContent = message;
-  container.append(flash);
-  container.hidden = false;
-}

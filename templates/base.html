@@ -3,67 +3,97 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#11131b">
+  <meta name="theme-color" content="#171717">
   <title>{% block title %}Brick Buddy{% endblock %} · LEGO</title>
-  <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg', v=2) }}">
+  <link rel="icon" type="svg+xml" href="{{ url_for('static', filename='favicon.svg', v=asset_version('favicon.svg')) }}">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css', v=19) }}">
-  <script src="{{ url_for('static', filename='app.js', v=5) }}" defer></script>
+  {# Seules les polices sont chargées en différé : le premier tracé est déjà final. #}
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" media="print" onload="this.media='all'">
+  {# Une feuille par souci, dans cet ordre : tokens, squelette, socle, composants, écrans, puis les largeurs. #}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/variables.css', v=asset_version('css/variables.css')) }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/critical.css', v=asset_version('css/critical.css')) }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css', v=asset_version('css/base.css')) }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/layout.css', v=asset_version('css/layout.css')) }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/components.css', v=asset_version('css/components.css')) }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css', v=asset_version('css/dashboard.css')) }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/pieces.css', v=asset_version('css/pieces.css')) }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/sets.css', v=asset_version('css/sets.css')) }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/inventory.css', v=asset_version('css/inventory.css')) }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/missing.css', v=asset_version('css/missing.css')) }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/verify.css', v=asset_version('css/verify.css')) }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/instructions.css', v=asset_version('css/instructions.css')) }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/settings.css', v=asset_version('css/settings.css')) }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/responsive.css', v=asset_version('css/responsive.css')) }}">
+  {# Scripts classiques chargés l'un après l'autre : core.js fournit la couche commune. #}
+  <script src="{{ url_for('static', filename='js/core.js', v=asset_version('js/core.js')) }}" defer></script>
+  <script src="{{ url_for('static', filename='js/inventory.js', v=asset_version('js/inventory.js')) }}" defer></script>
+  <script src="{{ url_for('static', filename='js/instructions.js', v=asset_version('js/instructions.js')) }}" defer></script>
+  <script src="{{ url_for('static', filename='js/images.js', v=asset_version('js/images.js')) }}" defer></script>
 </head>
 <body>
   <div class="app-shell">
     <aside class="sidebar">
-      <a class="brand" href="{{ url_for('pieces_page') }}"><span class="brand-mark">B</span><span>brick<span class="brand-light">buddy</span></span></a>
-      <div class="sidebar-label">ATELIER</div>
+      <a class="brand" href="{{ url_for('index') }}"><span class="brand-mark">B</span><span>brick<span class="brand-light">buddy</span></span></a>
       <nav class="main-nav" aria-label="Navigation principale">
-        <a class="nav-link {{ 'active' if request.endpoint == 'pieces_page' else '' }}" href="{{ url_for('pieces_page') }}">
-          <span class="nav-icon">▦</span><span>Pièces à réunir</span>
+        <a class="nav-link {{ 'active' if request.endpoint == 'index' else '' }}" href="{{ url_for('index') }}">
+          <span class="nav-icon">⌂</span><span>Accueil</span>
         </a>
         <a class="nav-link {{ 'active' if request.endpoint == 'sets_page' else '' }}" href="{{ url_for('sets_page') }}">
-          <span class="nav-icon">▤</span><span>Mes sets</span><span class="nav-count">{{ nav_stats.set_count }}</span>
+          <span class="nav-icon">▤</span><span>Mes sets</span><span class="nav-count" data-nav-count="sets">{{ nav_stats.set_count }}</span>
+        </a>
+        <a class="nav-link {{ 'active' if request.endpoint == 'pieces_page' else '' }}" href="{{ url_for('pieces_page') }}">
+          <span class="nav-icon">▦</span><span>Pièces à réunir</span>
         </a>
         <a class="nav-link {{ 'active' if request.endpoint == 'inventory_page' else '' }}" href="{{ url_for('inventory_page') }}">
           <span class="nav-icon">▥</span><span>Inventaire</span>
         </a>
         <a class="nav-link {{ 'active' if request.endpoint == 'missing_page' else '' }}" href="{{ url_for('missing_page') }}">
-          <span class="nav-icon">⌕</span><span>Pièces manquantes</span><span class="nav-count nav-count-alert">{{ nav_stats.missing_count }}</span>
+          <span class="nav-icon">⌕</span><span>Pièces manquantes</span><span class="nav-count nav-count-alert" data-nav-count="missing">{{ nav_stats.missing_count }}</span>
         </a>
       </nav>
       <div class="sidebar-bottom">
-        <div class="sidebar-note"><span class="note-icon">✦</span><strong>Un peu de patience,</strong><span>et la collection prendra forme.</span><div class="note-bricks"><i></i><i></i><i></i></div></div>
-        <div class="profile"><span class="profile-icon">🧱</span><span><strong>Mon atelier</strong><small>Collection personnelle</small></span><span class="profile-dot"></span></div>
+        <a class="nav-link {{ 'active' if request.endpoint == 'settings_page' else '' }}" href="{{ url_for('settings_page') }}">
+          <span class="nav-icon">⚙</span><span>Paramètres</span>
+        </a>
+        {# La déconnexion est la seule action qui recharge la page : data-static. #}
+        <form action="{{ url_for('logout') }}" method="post" data-static>
+          <input type="hidden" name="csrf_token" value="{{ session.csrf_token }}">
+          <button class="logout-button" type="submit">Déconnexion</button>
+        </form>
       </div>
     </aside>
 
     <main class="main-area">
       <header class="topbar">
-        <span class="breadcrumb">MON ATELIER <span>/</span> {% block breadcrumb %}PIÈCES À RÉUNIR{% endblock %}</span>
+        {# L'en-tête ne porte que le nom de la page, dans la teinte du site. #}
+        <span class="topbar-title"><span aria-hidden="true">✦</span><span data-page-title>{% block breadcrumb %}MA COLLECTION{% endblock %}</span></span>
         <div class="topbar-actions">
-          <a class="export-link" href="{{ url_for('export_bricklink', scope='owned' if request.endpoint in ['sets_page', 'inventory_page', 'missing_page'] else 'gather') }}">Exporter la liste <span>↗</span></a>
-          <form action="{{ url_for('logout') }}" method="post">
-            <input type="hidden" name="csrf_token" value="{{ session.csrf_token }}">
-            <button class="logout-button" type="submit">Déconnexion</button>
-          </form>
+          {# L'export ne concerne que les pièces à acquérir : il n'apparaît que là. #}
+          {% if request.endpoint == 'missing_page' %}
+            <a class="export-link" href="{{ url_for('export_bricklink', scope='owned') }}">Exporter la liste <span>↗</span></a>
+          {% endif %}
         </div>
       </header>
-      {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}<div class="flash-stack" aria-live="polite">{% for category, message in messages %}<div class="flash {{ category }}">{{ message }}</div>{% endfor %}</div>{% endif %}
-      {% endwith %}
-      <div id="interaction-messages" class="flash-stack" aria-live="polite" hidden></div>
-      <div class="content-area">{% block content %}{% endblock %}</div>
+      {# Zone remplacée sans rechargement par la couche commune (static/js/core.js). #}
+      <div class="content-area" data-page-results>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}<div class="flash-stack" aria-live="polite">{% for category, message in messages %}<div class="flash {{ category }}">{{ message }}</div>{% endfor %}</div>{% endif %}
+        {% endwith %}
+        <div id="interaction-messages" class="flash-stack" aria-live="polite" hidden></div>
+        {% block content %}{% endblock %}
+      </div>
       <footer class="footer"><span class="brand-mark small">B</span><span>Fait pour construire de grandes choses, une brique à la fois.</span><span>Brick Buddy · Ta collection reste chez toi.</span></footer>
     </main>
   </div>
   <dialog class="confirm-dialog" id="confirm-dialog">
     <form method="dialog" class="confirm-dialog-content">
-      <span class="confirm-dialog-icon" aria-hidden="true">!</span>
-      <h2>Confirmer le retrait</h2>
+      <h2 data-confirm-title>Confirmer le retrait</h2>
       <p data-confirm-message></p>
       <div class="confirm-dialog-actions">
+        <span class="confirm-dialog-icon" aria-hidden="true">!</span>
         <button class="button button-muted" value="cancel">Annuler</button>
-        <button class="button button-danger" value="confirm">Retirer le set</button>
+        <button class="button button-danger" value="confirm" data-confirm-button>Retirer le set</button>
       </div>
     </form>
   </dialog>

@@ -1,0 +1,175 @@
+/* ============================================================
+   Adaptations par largeur : chargée en dernier, elle corrige les
+   feuilles de composants au-dessus d'elle.
+   ============================================================ */
+
+/* « Mes sets » : les contrôles passent sous l'en-tête et s'enroulent */
+@media (max-width: 1300px) {
+  .collection-set-summary { flex-wrap: wrap; }
+  .collection-set-heading { flex: 1 1 100%; }
+  .collection-set-controls {
+    flex: 1 1 100%;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-areas:
+      "link build refresh"
+      "year image theme"
+      "complete follow add"
+      "remove . .";
+  }
+}
+
+/* Filtres : la recherche et les pastilles d'origine prennent la ligne entière */
+@media (max-width: 1220px) {
+  .filter-form { flex-wrap: wrap; }
+  .filter-form .search-box { flex: 1 1 240px; }
+  .filter-form .origin-chips { flex: 1 1 100%; order: 3; }
+  .filter-form .button-muted { order: 2; }
+  /* Les pièces d'un set s'enroulent plutôt que de devenir trop étroites */
+  .set-part-list { grid-template-columns: repeat(auto-fill, minmax(135px, 1fr)); }
+}
+
+/* Pièces : 6 colonnes trop étroites tant que la barre latérale reste large */
+@media (max-width: 1180px) and (min-width: 1081px) {
+  .parts-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  .piece-card-heading { flex-wrap: wrap; }
+}
+@media (max-width: 1180px) {
+  .inventory-parts { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+}
+
+/* Barre latérale réduite : le contenu récupère la place */
+@media (max-width: 1080px) {
+  .sidebar { width: 205px; }
+  .main-area { margin-left: 205px; padding: 0 24px; }
+  .color-groups { gap: 10px; }
+  .parts-grid { grid-template-columns: repeat(auto-fill, minmax(144px, 1fr)); }
+  .set-status-form { gap: 4px; }
+  .set-tag { padding: 0; }
+  .set-step-button { width: 24px; height: 24px; font-size: 16px; }
+  /* Le compteur « à trouver » passe à la ligne plutôt que de déborder */
+  .piece-card-heading { flex-wrap: wrap; gap: 4px; }
+  .part-missing-total { flex-wrap: wrap; justify-content: flex-end; }
+}
+
+@media (max-width: 1020px) {
+  .inventory-parts { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+
+/* Petit écran : la barre latérale passe au-dessus du contenu, en ligne */
+@media (max-width: 760px) {
+  .sidebar { position: sticky; inset: 0 0 auto; min-height: 0; width: 100%; height: auto; padding: 10px 14px 8px; border-right: 0; border-bottom: 1px solid var(--shell-line); }
+  .brand { padding: 0 3px 9px; font-size: 17px; }
+  .brand-mark { width: 29px; height: 29px; flex-basis: 29px; }
+  .sidebar-bottom { display: flex; align-items: center; gap: 8px; margin-top: 10px; padding-top: 10px; }
+  .sidebar-bottom .nav-link { min-height: 35px; flex: 0 0 auto; padding: 0 8px; white-space: nowrap; }
+  .main-nav { display: flex; gap: 5px; overflow-x: auto; }
+  .nav-link { min-height: 35px; flex: 0 0 auto; justify-content: center; gap: 6px; padding: 0 8px; font-size: 12px; white-space: nowrap; }
+  .nav-icon { width: auto; font-size: 13px; }
+  .nav-count { min-width: 16px; height: 16px; padding: 0 3px; font-size: 11px; }
+  .main-area { margin-left: 0; padding: 0 18px; }
+  .topbar { height: 47px; gap: 8px; }
+  .topbar-actions { gap: 8px; }
+  .logout-button { width: auto; min-height: 34px; padding: 0 12px; font-size: 11px; }
+  .content-area { padding-top: 24px; }
+  .collection-set-summary { gap: 7px; padding: 9px; }
+  .collection-set-heading { min-width: 145px; gap: 7px; }
+  .collection-set-controls { gap: 4px; }
+  /* Une seule colonne d'accueil quand la barre latérale est au-dessus */
+  .dash-grid { grid-template-columns: 1fr; }
+}
+
+/* « Vérifier un set » et notices : les colonnes se replient */
+@media (max-width: 720px) {
+  .page-intro { flex-wrap: wrap; }
+  .verify-row { flex-direction: column; align-items: flex-start; gap: 9px; padding: 10px 12px; }
+  .verify-row-thumb { width: 48px; height: 48px; flex: 0 0 48px; }
+  .verify-row-copy { width: 100%; }
+  .verify-row-qty { width: 100%; flex-wrap: wrap; gap: 14px; justify-content: space-between; }
+  .verify-qty { min-width: unset; flex: 1; }
+  .inv-stats { grid-template-columns: repeat(auto-fit, minmax(84px, 1fr)); max-width: 100%; }
+  .intro-side { align-items: stretch; width: 100%; }
+  .intro-side .button { width: 100%; justify-content: center; }
+  .verify-form input { flex-basis: 100%; width: 0; min-width: 0; }
+  .inventory-parts { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .inventory-part-card { padding: 4px; }
+  .inventory-part-quantity { font: 700 14px var(--font-display); }
+  /* Le carrousel reste lisible, les boutons se replient sans déborder */
+  .instruction-carousel { gap: 6px; }
+  .instruction-carousel-arrow { flex-basis: 32px; width: 32px; height: 32px; font-size: 14px; }
+  .instruction-carousel-track { gap: 8px; padding: 2px 2px 14px; }
+  .instruction-card { flex-basis: 172px; min-width: 172px; padding: 10px; }
+  .instruction-card-actions { gap: 6px; }
+  .instruction-card-actions .button { padding: 7px 8px; font-size: 11px; }
+}
+
+@media (max-width: 560px) {
+  .main-area { padding: 0 13px; }
+  .nav-link { gap: 4px; padding: 0 8px; }
+  .nav-count { display: none; }
+  .topbar-title { font-size: 11px; }
+  .page-intro { align-items: start; }
+  .page-intro h1 { font-size: 29px; }
+  .page-intro p { max-width: 270px; font-size: 12px; }
+  .page-intro > .button { min-height: 37px; gap: 4px; padding: 0 8px; font-size: 12px; }
+  .filter-form { flex-wrap: wrap; }
+  .search-box { flex-basis: 100%; }
+  .select-label { min-width: 0; flex: 1; }
+  .filter-form .select-label { flex: 1 1 100%; min-width: 0; }
+  .select-label select { font-size: 12px; }
+  .button-muted { min-width: 65px; }
+  .results-heading h2, .results-heading > span { font-size: 12px; }
+  .parts-grid { grid-template-columns: minmax(0, 1fr); }
+  .piece-card { padding: 4px; }
+  .piece-card-heading > strong { font-size: 14px; }
+  .part-missing-total strong { font-size: 19px; }
+  .set-status-form { gap: 4px; padding: 0; }
+  .set-tag { padding: 0; }
+  .set-missing-count { min-width: 16px; font-size: 16px; }
+  .set-step-button { width: 24px; height: 24px; font-size: 16px; }
+  .color-header { gap: 8px; padding: 11px; }
+  .color-heading h3 { font-size: 12px; }
+  .color-heading span, .color-totals span { font-size: 12px; }
+  .color-totals strong { font-size: 18px; }
+  .inventory-parts { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; }
+  .add-set-card { flex-wrap: wrap; gap: 9px; }
+  .add-set-copy { min-width: calc(100% - 55px); }
+  .add-form { width: 100%; }
+  .add-form input { flex: 1 1 140px; width: 0; }
+  .add-form .button { min-height: 37px; padding: 0 8px; font-size: 12px; }
+  .section-heading { align-items: start; gap: 10px; }
+  .section-heading h2 { font-size: 14px; }
+  .set-search { max-width: 160px; }
+  .set-grid { grid-template-columns: 1fr; }
+  .collection-set-summary .set-title strong { font-size: 12px; }
+  /* Pastille « notice » réduite à son symbole : l'en-tête reste sur une ligne */
+  .set-instructions { padding: 3px 6px; gap: 0; font-size: 12px; }
+  .set-instructions .set-instructions-label { display: none; }
+  /* Deux colonnes de pièces, l'une sous l'autre */
+  .set-part-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .collection-set-controls {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-areas:
+      "link build"
+      "refresh year"
+      "image theme"
+      "complete follow"
+      "add remove";
+  }
+  .collection-set-image:hover, .collection-set-image:focus-visible { transform: scale(3); }
+  .set-header { gap: 7px; padding: 10px; }
+  .candidate-actions { margin-left: auto; }
+  .manual-form { gap: 6px; }
+  .manual-form input { width: 65px; }
+  .manual-form label:nth-child(2) input { width: 95px; }
+  .export-panel { flex-wrap: wrap; }
+  .export-copy { min-width: calc(100% - 50px); }
+  .export-actions { width: 100%; }
+  .export-actions .button { min-height: 34px; flex: 1; gap: 4px; padding: 0 5px; font-size: 12px; }
+  .footer { flex-wrap: wrap; padding: 10px 0; }
+  .footer > span:last-child { width: 100%; margin-left: 32px; }
+  .dash-stat { min-width: 84px; flex: 1 1 84px; }
+}
+
+@media (max-width: 430px) {
+  .inventory-parts { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; }
+}

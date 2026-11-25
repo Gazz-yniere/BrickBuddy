@@ -1,0 +1,75 @@
+/* ============================================================
+   « Construire » : panneau de notices, carrousel, lecteur PDF
+   ============================================================ */
+
+.instruction-panel { margin-bottom: 20px; padding: 20px; border: 1px solid var(--line); border-radius: 12px; background: var(--panel); }
+.instruction-panel h2 { font-size: 19px; }
+.instruction-panel p { color: var(--muted); font-size: 13px; line-height: 1.5; }
+/* Panneau unique : le compte rendu et le bouton groupé tiennent sur la ligne
+   du titre, le statut de recherche passe à la ligne. */
+.instruction-panel-head h2 { margin-bottom: 4px; }
+.instruction-head-row { display: flex; min-width: 0; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 14px; }
+.instruction-head { display: flex; min-width: 0; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.instruction-head .button { flex: 0 1 auto; }
+.instruction-head-count { margin: 0; color: var(--ink) !important; }
+.instruction-download-status { flex: 1 1 100%; min-height: 18px; margin: 2px 0 0; }
+.instruction-search-status { color: var(--muted); font-size: 12px; }
+
+.instruction-carousel { display: flex; align-items: center; gap: 10px; margin: 14px 0; }
+.instruction-carousel-arrow { flex: 0 0 38px; width: 38px; height: 38px; padding: 0; font-size: 15px; }
+.instruction-carousel-arrow[hidden] { display: none; }
+/* Pas d'accrochage des tuiles : le script place la notice lue à une largeur et
+   demie du bord, l'accrochage la re-centrerait et la couperait au bord droit. */
+.instruction-carousel-track { display: flex; flex: 1 1 auto; min-width: 0; gap: 12px; padding: 4px 4px 16px; overflow-x: auto; scroll-behavior: smooth; scrollbar-color: var(--scrollbar) transparent; scrollbar-width: thin; }
+
+.instruction-card { position: relative; display: flex; flex: 0 0 196px; min-width: 196px; flex-direction: column; gap: 7px; padding: 12px; cursor: pointer; border: 1px solid var(--line); border-radius: 12px; background: var(--panel-raised); }
+.instruction-card:hover { border-color: var(--current-line); }
+.instruction-card.is-current { border-color: var(--current-line); background: var(--current-bg); }
+.instruction-card:focus-visible { outline: 2px solid var(--purple); outline-offset: 2px; }
+.instruction-card.is-current:hover, .instruction-card.is-current:focus-visible { border-color: var(--current-line-hover); }
+/* Proposition LEGO : aucun fichier local, le cadre pointillé le signale */
+.instruction-card-download { border-style: dashed; }
+.instruction-card-position { align-self: center; padding: 4px 9px; border-radius: 6px; color: var(--purple); background: var(--notice-position-bg); font-size: 11px; font-weight: 800; letter-spacing: .5px; text-transform: uppercase; }
+.instruction-card-thumb { position: relative; display: grid; width: 100%; aspect-ratio: 4 / 3; place-items: center; overflow: hidden; border-radius: 8px; background: var(--image-bg); }
+.instruction-card-thumb img { width: 100%; height: 100%; object-fit: contain; }
+.instruction-card-thumb .instruction-cover-empty, .instruction-cover-empty { color: var(--image-ink); font-size: 34px; }
+.instruction-current { position: absolute; right: 6px; bottom: 6px; padding: 3px 7px; border-radius: 5px; color: var(--on-found); background: var(--found-color); font-size: 10px; font-weight: 800; letter-spacing: .4px; text-transform: uppercase; }
+.instruction-card-title { margin: 0; font: 600 14px/1.35 var(--font-display); overflow-wrap: anywhere; }
+.instruction-card.is-current .instruction-card-title { color: var(--accent-ink); }
+.instruction-card-file { margin: 0; color: var(--muted); font-size: 11px; overflow-wrap: anywhere; }
+/* Les boutons d'une carte sont empilés et de même taille : ils ne sortent
+   jamais de la tuile. */
+.instruction-card-actions { display: grid; min-width: 0; grid-template-columns: minmax(0, 1fr); gap: 6px; margin-top: auto; cursor: default; }
+.instruction-card-actions .button { width: 100%; min-width: 0; padding: 7px 9px; font-size: 12px; text-align: center; }
+.instruction-card-actions form { min-width: 0; margin: 0; }
+.instruction-card-actions form .button { width: 100%; }
+
+/* Zone de dépôt : toute la zone ouvre le sélecteur de fichier, « Ajouter » ne
+   devient actif qu'une fois le PDF choisi. */
+.instruction-upload { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-top: 16px; }
+.instruction-dropzone { position: relative; display: flex; flex: 1 1 320px; flex-wrap: wrap; align-items: center; gap: 10px; min-width: 0; padding: 11px 14px; border: 1px dashed var(--drop-line); border-radius: 10px; background: var(--drop-bg); }
+.instruction-dropzone.is-dragging { border-color: var(--drop-hover-line); background: var(--drop-hover-bg); }
+.instruction-dropzone input[type="file"] { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+.instruction-dropzone-pick { padding: 7px 12px; border: 1px solid var(--drop-pick-line); border-radius: 8px; color: var(--drop-ink); background: var(--drop-hover-bg); font-size: 12px; font-weight: 700; pointer-events: none; transition: .16s ease; }
+.instruction-dropzone:hover .instruction-dropzone-pick { border-color: var(--drop-hover-line); background: var(--drop-pick-hover-bg); }
+.instruction-dropzone input[type="file"]:focus-visible ~ .instruction-dropzone-pick { outline: 2px solid var(--purple); outline-offset: 2px; }
+.instruction-dropzone-hint { margin: 0; color: var(--muted); font-size: 12px; overflow-wrap: anywhere; }
+.instruction-dropzone.has-file .instruction-dropzone-hint { color: var(--ink); }
+.instruction-dropzone.is-error .instruction-dropzone-hint { color: var(--danger-ink); }
+.instruction-upload .button:disabled { opacity: .45; cursor: default; }
+
+/* Le lecteur est un bloc comme les autres : même largeur et même boite que les
+   panneaux de la page. Le fond du bloc et du cadre reprend le fond du site pour
+   que le PDF ne flotte pas dans un noir plus sombre que la page. */
+.instruction-viewer-note { margin: 2px 0 8px; }
+.instruction-error { color: var(--danger-bright) !important; }
+.instruction-viewer-band { display: grid; gap: 12px; padding: 14px; background: var(--bg); }
+.instruction-viewer-band.is-hidden { display: none; }
+.instruction-viewer-shell { position: relative; width: 100%; min-height: 420px; overflow: hidden; border: 1px solid var(--line); border-radius: 12px; background: var(--bg); height: 75vh; }
+/* Le lecteur PDF natif suit la préférence de couleur du cadre : « dark » est
+   celle du site. Les navigateurs qui acceptent « transparent » peignent le fond
+   de la page dans la couleur du site. */
+.instruction-viewer { display: block; width: 100%; height: 100%; border: 0; background-color: var(--bg); color-scheme: dark; }
+.instruction-viewer-loading { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; color: var(--muted); font-size: 13px; background: radial-gradient(circle at 50% 40%, var(--drop-bg), var(--bg) 72%); transition: opacity .25s ease; }
+.instruction-viewer-loading .button-spinner { display: inline-block; width: 24px; height: 24px; flex-basis: 24px; border-width: 3px; border-color: var(--purple); border-right-color: transparent; }
+.instruction-viewer-shell.is-loaded .instruction-viewer-loading { visibility: hidden; opacity: 0; pointer-events: none; }

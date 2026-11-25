@@ -22,11 +22,21 @@ Une clé Rebrickable est facultative.
 
 ## Proposer un changement
 
+Le code de l'application est réparti en modules dans [`brickbuddy/`](brickbuddy/)
+(une fonction par route dans `brickbuddy/routes/`), et `app.py` reste la façade qui les
+importe. Les feuilles de style sont dans [`static/css/`](static/css/), les modules
+JavaScript dans [`static/js/`](static/js/).
+
 1. Crée une branche dédiée et limite tes modifications au sujet traité.
-2. Ajoute ou adapte les tests et la documentation concernés.
+2. Ajoute ou adapte les tests et la documentation concernés. Les fichiers de tests
+   sont regroupés dans [`tests/`](tests/), avec un socle commun (`tests/testbase.py`).
+   Un comportement nouveau ou corrigé est accompagné de son test, dans le fichier du
+   sujet concerné, et de sa ligne dans [`CHANGELOG.md`](CHANGELOG.md).
 3. Lance `python -m pytest -q`. Pour le JavaScript, si Node.js est installé,
-   vérifie la syntaxe avec `node --check static/app.js` et, pour le site,
-   `node --check docs/demo.js`.
+   vérifie la syntaxe de chaque fichier avec `node --check static/js/core.js`,
+   `node --check static/js/inventory.js`, `node --check static/js/instructions.js`,
+   `node --check static/js/images.js` et, pour le site, `node --check docs/demo.js`.
+   Vérifie aussi l'hygiène du diff avec `git diff --check`.
 4. Vérifie le comportement sur petit écran pour tout changement visuel.
 5. Ouvre une pull request décrivant le problème, la solution et les vérifications
    effectuées. Ajoute des captures pour les changements d'interface.
@@ -37,8 +47,9 @@ personnelles ou à une instance réelle de l'application.
 
 ## Données et sécurité
 
-Ne publie jamais de mot de passe, clé API, fichier `.env`, base de données,
-cache d'images personnel ou sauvegarde. Vérifie `git status` et le contenu du
+Ne publie jamais de mot de passe, clé API, fichier `.env`, base de données, cache
+d'images personnel ou sauvegarde (y compris `data/bdd.bak`). Le dossier `data/`, `.env`
+et le dossier `.operator/` sont ignorés par Git. Vérifie `git status` et le contenu du
 diff avant toute contribution. Si tu découvres une vulnérabilité, évite de
 divulguer des informations sensibles dans une issue publique et contacte le
 mainteneur en privé.
